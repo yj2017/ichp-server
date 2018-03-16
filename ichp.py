@@ -9,6 +9,7 @@ import redis
 import uuid
 import traceback
 import os
+import record
 
 app = Flask(__name__)
 uploadDir = 'D:/uploads/'
@@ -24,9 +25,11 @@ status = {0: ' successfully',
           8: 'unlogined,please login firstly',
           9: 'modify entry failed',
           10: 'mysql error ',
-          11: 'issue activity failed',
+          11: 'issue activity failed in mysql',
           12: 'issue record failed',
-          13: 'store personal info  failed'
+          13: 'store personal info  failed',
+          14：'collect activity failed',
+          15: 'you have not the authority'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -154,9 +157,6 @@ ALLOWED_EXTENSIONS = set(
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-# there are some bugs
-# 将上传的文件存入七牛云，返回云存储链接
-
 
 @app.route('/upload', methods=['POST', 'Get', 'PUT'])
 def Upload():
@@ -280,37 +280,85 @@ def AddRec():
     else:
         return decodeStatus(8)
 
-# issue activity
+# get record list
 
 
-@app.route('/issueAct', methods=["POST"])
-def issueAct():
+@app.route('/getRec', methods=['POST', 'GET'])
+def GetRec():
     cursor = conn.cursor()
     req = json.loads(request.data)
     token = req['token']
     if r.exists(token):
-        publisher = int(r.get(token))
-        title = req['title']
-        content=req['content']
-        hold_date=req['hold_date']
-        hold_addr=req['hold_addr']
-        act_src=req['act_src']
-        sql = 'insert into record (publisher,title,content,hold_date,hold_addr,act_src) values ("%d","%s","%s","%s","%s","%s")' % (
-            publisher, title, content,hold_date,hold_addr,act_src)
+        sql = 'select * from record'
         try:
             cursor.execute(sql)
-            conn.commit()
+            lRec = cursor.fetchall()
+            if cursor.rowcount > 0:
+                # 返回列表
+                
+                conn.commit()
+           # ins='insert into '
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
             cursor.close()
-            return decodeStatus(11)
+            return decodeStatus(10)
         else:
             cursor.close()
             return decodeStatus(0)
     else:
         return decodeStatus(8)
 
+ # search record
 
+
+@app.route('/searchRec', methods=["POST"])
+def SearchRec():
+
+    # issue activity
+
+
+@app.route('/issueAct', methods=["POST"])
+def IssueAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    if r.exists(token):
+        publisher = int(r.get(token))
+        role_sql = 'select role from user where user_id=="%s"' % (publisher,)
+        cursor.execute(role_sql)
+        role_id = cursor.fetchall()
+        if role_id[0][0] == 1:  # 角色为官方
+            title = req['title']
+            content = req['content']
+            hold_date = req['hold_date']
+            hold_addr = req['hold_addr']
+            act_src = req['act_src']
+            sql = 'insert into record (publisher,title,content,hold_date,hold_addr,act_src) values ("%d","%s","%s","%s","%s","%s")' % (
+                publisher, title, content, hold_date, hold_addr, act_src)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(11)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            return decodeStatus(15)
+    else:
+        return decodeStatus(8)
+
+
+@app.route('/collAct', methods=["POST"])
+def CollAct():
+
+
+@app.route('/searchEntry', methods=["POST"])
+@app.route('/searchUser', methods=["POST"])
+@app.route('/searchAct', methods=["POST"])
 if __name__ == '__main__':
     app.run(debug=True)
