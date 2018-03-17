@@ -10,11 +10,13 @@ import uuid
 import traceback
 import os
 from record import Record
+from activity import Activity
+from entry import Entry
 
 app = Flask(__name__)
 uploadDir = 'D:/uploads/'
 
-status = {0: ' successfully',
+status = {0: 'successfully',
           1: 'password error',
           2: 'no such account name or password',
           3: 'username or password can not be empty',
@@ -31,7 +33,17 @@ status = {0: ' successfully',
           14: 'collect activity failed',
           15: 'you have not the authority',
           16: 'get records failed',
-          17: 'search records failed '
+          17: 'search records failed ',
+          18: 'search activity failed',
+          19: 'search entry failed',
+          20: 'search user failed',
+          21: 'collect activity failed',
+          22: 'there have not the activity',
+          23: 'collect record failed',
+          24: 'there have not the record',
+          25: 'collect entry failed',
+          26: 'there have not the entry',
+          27: 'delete record failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -114,6 +126,7 @@ def Login_info():
         else:
             cursor.close()
             return decodeStatus(2)
+
 
 # store the users' information
 
@@ -221,7 +234,7 @@ def AddEntry():
     else:
         return decodeStatus(8)
 
-# modify label,entry
+# modify label or entry
 
 
 @app.route('/modifyEntry', methods=['POST'])
@@ -250,6 +263,99 @@ def modifyEntry():
         return decodeStatus(8)
     # store record
 
+# search entry
+
+
+@app.route('/searchEntry', methods=["POST"])
+def SearchEntry():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    searchEntry = req['searchEntry']
+    if r.exists(token):
+        sql = 'select entry_id,name,content,editor from entry  where name like "%s" ' % (
+            '%'+searchEntry+'%',)
+        try:
+            cursor.execute(sql)
+            listEnt = cursor.fetchall()
+            entL = []
+            if cursor.rowcount > 0:
+                # 返回列表
+                for row in range(cursor.rowcount):
+                    entry = Entry(listEnt[row][0], listEnt[row]
+                                  [1], listEnt[row][2], listEnt[row][3])
+                    entL.append(entry)
+                    app.logger.debug(entL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": entL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(19)
+    else:
+        return decodeStatus(8)
+
+
+@app.route('/collEntry', methods=["POST"])
+def CollEntry():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    entry_id = int(req['entry_id'])
+    if r.exists(token):
+        sql_ent = 'select * from entry where entry_id= %d' % (entry_id,)
+        cursor.execute(sql_ent)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            collector = int(r.get(token))
+            sql = 'insert into coll_entry (collector,entry_id) values (%d,%d)' % (
+                collector, entry_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(25)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            return decodeStatus(26)
+    else:
+        return decodeStatus(8)
+
+# get  an entry content
+
+
+@app.route('/getEntry', methods=["POST", "GET"])
+def GetEntry():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    entry_id = int(req['entry_id'])
+    if r.exists(token):
+        sql = 'select entry_id,name,content,editor from entry where entry_id=%d' % (
+            entry_id,)
+        try:
+            cursor.execute(sql)
+            entry = cursor.fetchall()
+            entryL = []
+            if cursor.rowcount > 0:
+                entry = Entry(entry[0][0], entry[0][1],
+                              entry[0][2], entry[0][3])
+                entryL.append(entry)
+                return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            else:
+                return decodeStatus(26)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        return decodeStatus(8)
+
+
 # issue record
 
 
@@ -270,7 +376,6 @@ def AddRec():
         try:
             cursor.execute(sql)
             conn.commit()
-           # ins='insert into '
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -282,11 +387,49 @@ def AddRec():
     else:
         return decodeStatus(8)
 
+# delete record
+
+
+@app.route('/delRec', methods=["POST"])
+def DelRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    rec_id = int(req['rec_id'])
+    if r.exists(token):
+        sql_isExist = 'select * from record where rec_id=%d' % (rec_id,)
+        cursor.execute(sql_isExist)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            operator = int(r.get(token))
+            sql_temp = 'select recorder from record where rec_id=%d' % (
+                rec_id,)
+            cursor.execute(sql_temp)
+            recorder = cursor.fetchall()
+            if operator == recorder[0][0]:
+                sql = 'delete from record where rec_id=%d' % (rec_id,)
+                try:
+                    cursor.execute(sql)
+                    conn.commit()
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(27)
+                else:
+                    cursor.close()
+                    return decodeStatus(0)
+            else:
+                return decodeStatus(15)  # 不是发布者删除record
+        else:
+            return decodeStatus(24)
+    else:
+        return decodeStatus(8)
 # get record list
 
 
-@app.route('/getRec', methods=['POST', 'GET'])
-def GetRec():
+@app.route('/getALLRec', methods=['POST', 'GET'])
+def GetAllRec():
     cursor = conn.cursor()
     req = json.loads(request.data)
     token = req['token']
@@ -323,7 +466,7 @@ def SearchRec():
     searchRec = req['searchRec']
     if r.exists(token):
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where title like "%s" ' % (
-           '%'+searchRec+'%',)
+            '%'+searchRec+'%',)
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
@@ -343,6 +486,37 @@ def SearchRec():
     else:
         return decodeStatus(8)
 
+
+@app.route('/collRec', methods=["POST"])
+def CollRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    rec_id = int(req['rec_id'])
+    if r.exists(token):
+        sql_rec = 'select * from record where rec_id= %d' % (rec_id,)
+        cursor.execute(sql_rec)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            collector = int(r.get(token))
+            sql = 'insert into coll_record (collector,rec_id) values (%d,%d)' % (
+                collector, rec_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(23)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            return decodeStatus(24)
+    else:
+        return decodeStatus(8)
+
 # issue activity
 
 
@@ -353,7 +527,7 @@ def IssueAct():
     token = req['token']
     if r.exists(token):
         publisher = int(r.get(token))
-        role_sql = 'select role from user where user_id=="%s"' % (publisher,)
+        role_sql = 'select role from user where user_id= %d' % (publisher,)
         cursor.execute(role_sql)
         role_id = cursor.fetchall()
         if role_id[0][0] == 1:  # 角色为官方
@@ -362,7 +536,7 @@ def IssueAct():
             hold_date = req['hold_date']
             hold_addr = req['hold_addr']
             act_src = req['act_src']
-            sql = 'insert into record (publisher,title,content,hold_date,hold_addr,act_src) values ("%d","%s","%s","%s","%s","%s")' % (
+            sql = 'insert into record (publisher,title,content,hold_date,hold_addr,act_src) values (%d,"%s","%s","%s","%s","%s")' % (
                 publisher, title, content, hold_date, hold_addr, act_src)
             try:
                 cursor.execute(sql)
@@ -380,14 +554,169 @@ def IssueAct():
     else:
         return decodeStatus(8)
 
-
-#@app.route('/collAct', methods=["POST"])
-# def CollAct():
+# delete activity
 
 
-#@app.route('/searchEntry', methods=["POST"])
-#@app.route('/searchUser', methods=["POST"])
-# @app.route('/searchAct', methods=["POST"])
+@app.route('/delAct', methods=["POST"])
+def DelAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    act_id = int(req['act_id'])
+    if r.exists(token):
+        sql_isExist = 'select * from activity where act_id=%d' % (act_id,)
+        cursor.execute(sql_isExist)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            operator = int(r.get(token))
+            sql_temp = 'select publisher from activity where act_id=%d' % (
+                act_id,)
+            cursor.execute(sql_temp)
+            publisher = cursor.fetchall()
+            if operator == publisher[0][0]:
+                sql = 'delete from activity where act_id=%d' % (act_id,)
+                try:
+                    cursor.execute(sql)
+                    conn.commit()
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(27)
+                else:
+                    cursor.close()
+                    return decodeStatus(0)
+            else:
+                return decodeStatus(15)  # 不是发布者删除
+        else:
+            return decodeStatus(22)
+    else:
+        return decodeStatus(8)
+
+# search activity
+
+
+@app.route('/searchAct', methods=["POST", "GET"])
+def SearchAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    searchAct = req['searchAct']
+    if r.exists(token):
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity  where title like "%s" ' % (
+            '%'+searchAct+'%',)
+        try:
+            cursor.execute(sql)
+            listAct = cursor.fetchall()
+            actL = []
+            if cursor.rowcount > 0:
+                # 返回列表
+                for row in range(cursor.rowcount):
+                    activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                    actL.append(activity)
+                    app.logger.debug(actL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(18)
+    else:
+        return decodeStatus(8)
+
+# get an activity 
+@app.route('/getAct', methods=["POST", "GET"])
+def GetAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    entry_id = int(req['entry_id'])
+    if r.exists(token):
+        sql = 'select entry_id,name,content,editor from entry where entry_id=%d' % (
+            entry_id,)
+        try:
+            cursor.execute(sql)
+            entry = cursor.fetchall()
+            entryL = []
+            if cursor.rowcount > 0:
+                entry = Entry(entry[0][0], entry[0][1],
+                              entry[0][2], entry[0][3])
+                entryL.append(entry)
+                return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            else:
+                return decodeStatus(26)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        return decodeStatus(8)
+# collect activity
+
+
+@app.route('/collAct', methods=["POST", "GET"])
+def CollAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    act_id = int(req['act_id'])
+    if r.exists(token):
+        sql_act = 'select * from activity where act_id= %d' % (act_id,)
+        cursor.execute(sql_act)
+        temp = cursor.fetchall()
+        app.logger.debug(temp)
+        if cursor.rowcount > 0:
+            collector = int(r.get(token))
+            sql = 'insert into coll_activity (collector,act_id) values (%d,%d)' % (
+                collector, act_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(21)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            return decodeStatus(22)
+    else:
+        return decodeStatus(8)
+
+
+# search user
+
+
+@app.route('/searchUser', methods=["POST", "GET"])
+def searchUser():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    searchEntry = req['searchEntry']
+    if r.exists(token):
+        sql = 'select entry_id,name,content,editor from entry  where name like "%s" ' % (
+            '%'+searchEntry+'%',)
+        try:
+            cursor.execute(sql)
+            listEnt = cursor.fetchall()
+            entL = []
+            if cursor.rowcount > 0:
+                # 返回列表
+                for row in range(cursor.rowcount):
+                    entry = Entry(listEnt[row][0], listEnt[row]
+                                  [1], listEnt[row][2], listEnt[row][3])
+                    entL.append(entry)
+                    app.logger.debug(entL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": entL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(19)
+    else:
+        return decodeStatus(8)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
