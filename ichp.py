@@ -9,7 +9,7 @@ import redis
 import uuid
 import traceback
 import os
-import record
+from record import Record
 
 app = Flask(__name__)
 uploadDir = 'D:/uploads/'
@@ -28,8 +28,10 @@ status = {0: ' successfully',
           11: 'issue activity failed in mysql',
           12: 'issue record failed',
           13: 'store personal info  failed',
-          14：'collect activity failed',
-          15: 'you have not the authority'
+          14: 'collect activity failed',
+          15: 'you have not the authority',
+          16: 'get records failed',
+          17: 'search records failed '
           }
 # redis
 pool = redis.ConnectionPool(
@@ -179,7 +181,7 @@ def Upload():
                 up_filename = str(uuid.uuid1())+f.filename
                 app.logger.debug(up_filename)
                 key = str(up_filename)  # 七牛云上文件名
-                up_token = q.upload_token(bucket_name, key, 7200)
+                up_token = q.upload_token(bucket_name, key, 3600*24)
                 ret, info = put_file(up_token, key, local_file)
                 os.remove(local_file)
                 return json.dumps({"msg": "upload successfully", "addr": 'http://p5o94s90i.bkt.clouddn.com/%s' % up_filename, "code": 0}, ensure_ascii=False)
@@ -289,23 +291,24 @@ def GetRec():
     req = json.loads(request.data)
     token = req['token']
     if r.exists(token):
-        sql = 'select * from record'
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record'
         try:
             cursor.execute(sql)
-            lRec = cursor.fetchall()
+            listRec = cursor.fetchall()
+            app.logger.debug(listRec)
+            recL = []
             if cursor.rowcount > 0:
                 # 返回列表
-                
-                conn.commit()
-           # ins='insert into '
+                for row in range(cursor.rowcount):
+                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
-            conn.rollback()
             cursor.close()
-            return decodeStatus(10)
-        else:
-            cursor.close()
-            return decodeStatus(0)
+            return decodeStatus(16)
     else:
         return decodeStatus(8)
 
@@ -314,8 +317,33 @@ def GetRec():
 
 @app.route('/searchRec', methods=["POST"])
 def SearchRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    searchRec = req['searchRec']
+    if r.exists(token):
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where title like "%s" ' % (
+           '%'+searchRec+'%',)
+        try:
+            cursor.execute(sql)
+            listRec = cursor.fetchall()
+            recL = []
+            if cursor.rowcount > 0:
+                # 返回列表
+                for row in range(cursor.rowcount):
+                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(17)
+    else:
+        return decodeStatus(8)
 
-    # issue activity
+# issue activity
 
 
 @app.route('/issueAct', methods=["POST"])
@@ -353,12 +381,13 @@ def IssueAct():
         return decodeStatus(8)
 
 
-@app.route('/collAct', methods=["POST"])
-def CollAct():
+#@app.route('/collAct', methods=["POST"])
+# def CollAct():
 
 
-@app.route('/searchEntry', methods=["POST"])
-@app.route('/searchUser', methods=["POST"])
-@app.route('/searchAct', methods=["POST"])
+#@app.route('/searchEntry', methods=["POST"])
+#@app.route('/searchUser', methods=["POST"])
+# @app.route('/searchAct', methods=["POST"])
+
 if __name__ == '__main__':
     app.run(debug=True)
