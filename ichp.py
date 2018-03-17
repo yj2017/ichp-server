@@ -43,7 +43,9 @@ status = {0: 'successfully',
           24: 'there have not the record',
           25: 'collect entry failed',
           26: 'there have not the entry',
-          27: 'delete record failed'
+          27: 'delete record failed',
+          28: 'get activity failed',
+          29: 'modify record failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -119,7 +121,7 @@ def Login_info():
                 # key-value is stored by redis,3600s后过期
                 r.set(the_uuid, user_id, ex=3600*24)
                 cursor.close()
-                return json.dumps({"msg": "login successfully", "token": str(the_uuid), "uid": user_id})
+                return json.dumps({"msg": "login successfully", "token": str(the_uuid), "uid": user_id, "code": 0})
             else:
                 cursor.close()
                 return decodeStatus(1)
@@ -241,13 +243,13 @@ def AddEntry():
 def modifyEntry():
     cursor = conn.cursor()
     req = json.loads(request.data)
-    name = req['name']
+    entry_id = int(req['entry_id'])
     token = req['token']
     editor = int(r.get(token))
     if r.exists(token):
         content = req['content']
-        sql = 'update entry set content=("%s"),editor=(%d) where name=("%s")' % (
-            content, editor, name)
+        sql = 'update entry set content="%s",editor=%d where entry_id=%d' % (
+            content, editor, entry_id)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -261,7 +263,6 @@ def modifyEntry():
             return decodeStatus(0)
     else:
         return decodeStatus(8)
-    # store record
 
 # search entry
 
@@ -425,6 +426,41 @@ def DelRec():
             return decodeStatus(24)
     else:
         return decodeStatus(8)
+
+# modify record
+
+
+def ModifyRecord():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    rec_id = int(req['rec_id'])
+    token = req['token']
+    operator = int(r.get(token))
+    if r.exists(token):
+        sql_temp = 'select recorder from record where rec_id=%d' % (rec_id,)
+        cursor.execute(sql_temp)
+        recorder = cursor.fetchall()
+        if operator == recorder[0][0]:
+            content = req['content']
+            sql = 'update entry set content="%s" where rec_id=%d' % (
+                content, rec_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(29)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            return decodeStatus(15)
+    else:
+        return decodeStatus(8)
+
+
 # get record list
 
 
@@ -445,6 +481,33 @@ def GetAllRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        return decodeStatus(8)
+
+
+@app.route('/getUserRec', methods=["POST", "GET"])
+def GetUserRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    recorder = int(req['recorder'])
+    if r.exists(token):
+        sql = 'select rec_id, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where recorder=%d' % recorder
+        try:
+            cursor.execute(sql)
+            listRec = cursor.fetchall()
+            recL = []
+            if cursor.rowcount > 0:
+                for row in range(cursor.rowcount):
+                    record = Record(listRec[row][0], recorder, listRec[row][1], listRec[row][2], listRec[row]
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8])
                     recL.append(record)
                     app.logger.debug(recL)
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -593,6 +656,7 @@ def DelAct():
     else:
         return decodeStatus(8)
 
+
 # search activity
 
 
@@ -624,31 +688,53 @@ def SearchAct():
     else:
         return decodeStatus(8)
 
-# get an activity 
-@app.route('/getAct', methods=["POST", "GET"])
-def GetAct():
+# get activity
+
+
+@app.route('/getAllAct', methods=["POST", "GET"])
+def GetAllAct():
     cursor = conn.cursor()
     req = json.loads(request.data)
     token = req['token']
-    entry_id = int(req['entry_id'])
     if r.exists(token):
-        sql = 'select entry_id,name,content,editor from entry where entry_id=%d' % (
-            entry_id,)
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity'
         try:
             cursor.execute(sql)
-            entry = cursor.fetchall()
-            entryL = []
-            if cursor.rowcount > 0:
-                entry = Entry(entry[0][0], entry[0][1],
-                              entry[0][2], entry[0][3])
-                entryL.append(entry)
-                return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-            else:
-                return decodeStatus(26)
+            act = cursor.fetchall()
+            actL = []
+            activity = Activity(act[0][0], act[0][1],
+                                act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
+            actL.append(activity)
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
-            return decodeStatus(16)
+            return decodeStatus(28)
+    else:
+        return decodeStatus(8)
+
+
+@app.route('/getUserAct', methods=["POST", "GET"])
+def GetUserAct():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    publisher = int(req['publisher'])
+    if r.exists(token):
+        sql = 'select act_id,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher=%d' % (
+            publisher,)
+        try:
+            cursor.execute(sql)
+            act = cursor.fetchall()
+            actL = []
+            activity = Activity(act[0][0], publisher,
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6])
+            actL.append(activity)
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(28)
     else:
         return decodeStatus(8)
 # collect activity
