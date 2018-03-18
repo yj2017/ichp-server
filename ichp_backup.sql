@@ -30,10 +30,11 @@ CREATE TABLE `activity` (
   `hold_addr` char(100) DEFAULT NULL,
   `act_src` text,
   `issue_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `hold_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`act_id`),
   KEY `publisher` (`publisher`),
   CONSTRAINT `activity_ibfk_1` FOREIGN KEY (`publisher`) REFERENCES `user` (`user_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,6 +43,7 @@ CREATE TABLE `activity` (
 
 LOCK TABLES `activity` WRITE;
 /*!40000 ALTER TABLE `activity` DISABLE KEYS */;
+INSERT INTO `activity` VALUES (2,1111,'hh','hh','北京','baidu','2018-03-18 09:04:50','2018-03-18 09:04:50');
 /*!40000 ALTER TABLE `activity` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -353,4 +355,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-03-17 22:18:27
+-- Dump completed on 2018-03-18 10:50:12
