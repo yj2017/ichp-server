@@ -12,6 +12,7 @@ import os
 from record import Record
 from activity import Activity
 from entry import Entry
+from user import User
 
 app = Flask(__name__)
 uploadDir = 'D:/uploads/'
@@ -38,14 +39,17 @@ status = {0: 'successfully',
           19: 'search entry failed',
           20: 'search user failed',
           21: 'collect activity failed',
-          22: 'there have not the activity',
+          22: 'no such activity',
           23: 'collect record failed',
-          24: 'there have not the record',
+          24: 'no such record',
           25: 'collect entry failed',
-          26: 'there have not the entry',
+          26: 'no such entry',
           27: 'delete record failed',
           28: 'get activity failed',
-          29: 'modify record failed'
+          29: 'modify record failed',
+          30: 'search user info failed',
+          31: 'no such user',
+          32: 'get my concerned list failed '
           }
 # redis
 pool = redis.ConnectionPool(
@@ -101,7 +105,7 @@ def Register():
 
 
 # This is login
-@app.route('/login', methods=['POST', 'Get'])
+@app.route('/login', methods=['POST'])
 def Login_info():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -131,9 +135,7 @@ def Login_info():
 
 
 # store the users' information
-
-
-@app.route('/storeInfo', methods=['Get', 'POST', 'PUT'])
+@app.route('/storeInfo', methods=['POST'])
 def StoreInfo():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -175,7 +177,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload', methods=['POST', 'Get', 'PUT'])
+@app.route('/upload', methods=['POST'])
 def Upload():
     try:
         token = request.form['token']  # client 传来的token属性.token为键，uid为值
@@ -329,7 +331,7 @@ def CollEntry():
 # get  an entry content
 
 
-@app.route('/getEntry', methods=["POST", "GET"])
+@app.route('/getEntry', methods=["POST"])
 def GetEntry():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -358,8 +360,6 @@ def GetEntry():
 
 
 # issue record
-
-
 @app.route('/addRec', methods=['POST'])
 def AddRec():
     cursor = conn.cursor()
@@ -462,9 +462,7 @@ def ModifyRecord():
 
 
 # get record list
-
-
-@app.route('/getALLRec', methods=['POST', 'GET'])
+@app.route('/getALLRec', methods=['POST'])
 def GetAllRec():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -492,7 +490,7 @@ def GetAllRec():
         return decodeStatus(8)
 
 
-@app.route('/getUserRec', methods=["POST", "GET"])
+@app.route('/getUserRec', methods=["POST"])
 def GetUserRec():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -658,9 +656,7 @@ def DelAct():
 
 
 # search activity
-
-
-@app.route('/searchAct', methods=["POST", "GET"])
+@app.route('/searchAct', methods=["POST"])
 def SearchAct():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -674,13 +670,13 @@ def SearchAct():
             listAct = cursor.fetchall()
             actL = []
             if cursor.rowcount > 0:
-                # 返回列表
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
                                         [4], listAct[row][5], listAct[row][6], listAct[row][7])
                     actL.append(activity)
                     app.logger.debug(actL)
-            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+                return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return decodeStatus(32)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
@@ -691,7 +687,7 @@ def SearchAct():
 # get activity
 
 
-@app.route('/getAllAct', methods=["POST", "GET"])
+@app.route('/getAllAct', methods=["POST"])
 def GetAllAct():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -714,7 +710,7 @@ def GetAllAct():
         return decodeStatus(8)
 
 
-@app.route('/getUserAct', methods=["POST", "GET"])
+@app.route('/getUserAct', methods=["POST"])
 def GetUserAct():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -740,7 +736,7 @@ def GetUserAct():
 # collect activity
 
 
-@app.route('/collAct', methods=["POST", "GET"])
+@app.route('/collAct', methods=["POST"])
 def CollAct():
     cursor = conn.cursor()
     req = json.loads(request.data)
@@ -772,36 +768,97 @@ def CollAct():
         return decodeStatus(8)
 
 
-# search user
-
-
-@app.route('/searchUser', methods=["POST", "GET"])
-def searchUser():
+# search user information
+@app.route('/searchUserInfo', methods=["POST"])
+def SearchUserInfo():
     cursor = conn.cursor()
     req = json.loads(request.data)
     token = req['token']
-    searchEntry = req['searchEntry']
+    searchW = req['searchW']  # 通过账号模糊搜索
     if r.exists(token):
-        sql = 'select entry_id,name,content,editor from entry  where name like "%s" ' % (
-            '%'+searchEntry+'%',)
+        sql = 'select user_id,role,telephone,image_src,name,sign,acc_point,account_name,reg_date from user where account_name like "%s"' % (
+            '%'+searchW+'%',)
         try:
             cursor.execute(sql)
-            listEnt = cursor.fetchall()
-            entL = []
+            listUser = cursor.fetchall()
+            userL = []
             if cursor.rowcount > 0:
-                # 返回列表
                 for row in range(cursor.rowcount):
-                    entry = Entry(listEnt[row][0], listEnt[row]
-                                  [1], listEnt[row][2], listEnt[row][3])
-                    entL.append(entry)
-                    app.logger.debug(entL)
-            return json.dumps({"msg": "successfully", "code": 0, "data": entL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+                    user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
+                                listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                    userL.append(user)
+                return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            else:
+                return decodeStatus(22)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
-            return decodeStatus(19)
+            return decodeStatus(30)
     else:
         return decodeStatus(8)
+
+# get my Concerned list
+
+
+@app.route('/getMyConc', methods=["POST"])
+def GetMyConc():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    pay_id = int(r.get(token))  # myself
+    if r.exists(token):
+        sql_temp = 'select be_paid_id from attention_info where pay_id=%d' % (
+            pay_id,)
+        try:
+            cursor.execute(sql_temp)
+            uidL = cursor.fetchall()
+            userL = []  # 没有关注任何用户
+            if cursor.rowcount > 0:
+                for row in range(cursor.rowcount):
+                    sql = 'select user_id,role,telephone,image_src,name,sign,acc_point,account_name,reg_date from user where user_id=%d' % (
+                        uidL[row][0])
+                    try:
+                        cursor.execute(sql)
+                        listUser = cursor.fetchall()
+                        user = User(listUser[0][0], listUser[0][1], listUser[0][2], listUser[0][3],
+                                    listUser[0][4], listUser[0][5], listUser[0][6], listUser[0][7], listUser[0][8])
+                        userL.append(user)
+                    except Exception as e:
+                        app.logger.debug(str(e))
+                        cursor.close()
+                        return decodeStatus(32)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(32)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# approve 点赞
+
+
+@app.route('/apprRec', methods=["POST"])
+def ApprRec():
+    cursor = conn.cursor()
+    req=json.loads(request.data)
+    token=req['token']
+    rec_id=int(req['rec_id'])
+    if r.exists(token):
+        sql_tmep=''
+        try:
+            cursor.execute(sql_tmep)
+
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# comment 评论
+@app.route('/commRec', methods=["POST"])
+def CommRec():
+    cursor = conn.cursor()
 
 
 if __name__ == '__main__':
