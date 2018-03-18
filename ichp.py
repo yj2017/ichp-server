@@ -13,6 +13,7 @@ from record import Record
 from activity import Activity
 from entry import Entry
 from user import User
+from comment import Comment
 
 app = Flask(__name__)
 uploadDir = 'D:/uploads/'
@@ -27,11 +28,11 @@ status = {0: 'successfully',
           7: 'the file type  is wrong ',
           8: 'unlogined,please login firstly',
           9: 'modify entry failed',
-          10: 'mysql error ',
-          11: 'issue activity failed in mysql',
+          10: 'store user information failed ',
+          11: 'issue activity failed ',
           12: 'issue record failed',
-          13: 'store personal info  failed',
-          14: 'collect activity failed',
+          13: 'upload file failed',
+          14: 'already exist the entry',
           15: 'you have not the authority',
           16: 'get records failed',
           17: 'search records failed ',
@@ -49,7 +50,16 @@ status = {0: 'successfully',
           29: 'modify record failed',
           30: 'search user info failed',
           31: 'no such user',
-          32: 'get my concerned list failed '
+          32: 'get my concerned list failed ',
+          33: 'approve record failed',
+          34: 'comment record failed',
+          35: 'approve comment failed',
+          36: 'comment comment failed',
+          37: 'get comment of record failed',
+          38: 'get comment of comment failed',
+          39: 'no such comment record id ',
+          40: 'delete comment of comment  failed',
+          41: 'delete comment of record failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -74,6 +84,7 @@ def Register():
     psw = req['psw']
     role = int(req['role'])
     if username == ''or psw == '' or role == '':
+        cursor.close()
         return decodeStatus(3)
     else:
         cursor.execute(
@@ -91,14 +102,14 @@ def Register():
             except:  # mysql error
                 conn.rollback()
                 cursor.close()
-                return decodeStatus(10)
-            if cursor.rowcount == 1:
+                return decodeStatus(5)
+            if cursor.rowcount > 0:
                 cursor.execute(
                     'select user_id from user where account_name="%s" and psw="%s"' % (username, psw))
                 user_id = cursor.fetchall()[0][0]
                 cursor.close()
                 # return the unique user id
-                return json.dumps({"the user id": user_id})
+                return json.dumps({"user_id": user_id})
             else:
                 cursor.close()
                 return decodeStatus(5)
@@ -106,7 +117,7 @@ def Register():
 
 # This is login
 @app.route('/login', methods=['POST'])
-def Login_info():
+def Login():
     cursor = conn.cursor()
     req = json.loads(request.data)
     username = req['username']
@@ -151,7 +162,6 @@ def StoreInfo():
     else:
         sql = 'update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%d' % (
             telephone, name, sign, user_id, image_src)
-        app.logger.debug(sql)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -222,20 +232,28 @@ def AddEntry():
     if r.exists(token):
         name = req['name']
         content = req['content']
-        sql = 'insert into entry (name,content,editor) values ("%s","%s",%d)' % (
-            name, content, editor)
-        try:
-            cursor.execute(sql)
-            conn.commit()
-        except Exception as de:
-            app.logger.debug(str(de))
-            conn.rollback()
+        sql_temp = 'select * from entry where name ="%s"' % (name,)
+        cursor.execute(sql_temp)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
             cursor.close()
-            return decodeStatus(6)
+            return decodeStatus(14)
         else:
-            cursor.close()
-            return decodeStatus(0)
+            sql = 'insert into entry (name,content,editor) values ("%s","%s",%d)' % (
+                name, content, editor)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(6)
+            else:
+                cursor.close()
+                return decodeStatus(0)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # modify label or entry
@@ -289,12 +307,14 @@ def SearchEntry():
                                   [1], listEnt[row][2], listEnt[row][3])
                     entL.append(entry)
                     app.logger.debug(entL)
+            cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": entL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(19)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
@@ -324,8 +344,10 @@ def CollEntry():
                 cursor.close()
                 return decodeStatus(0)
         else:
+            cursor.close()
             return decodeStatus(26)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # get  an entry content
@@ -348,14 +370,17 @@ def GetEntry():
                 entry = Entry(entry[0][0], entry[0][1],
                               entry[0][2], entry[0][3])
                 entryL.append(entry)
+                cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
             else:
+                cursor.close()
                 return decodeStatus(26)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(16)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
@@ -372,8 +397,8 @@ def AddRec():
         url = req['url']
         type = req['type']
         addr = req['addr']  # 地址
-        sql = 'insert into record (recorder,title,discribe,url,type,addr) values ("%d","%s","%s","%s","%s","%s")' % (
-            recorder, title, discribe, url, type, addr)
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num) values ("%d","%s","%s","%s","%s","%s",%d,%d)' % (
+            recorder, title, discribe, url, type, addr, 0, 0)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -381,11 +406,12 @@ def AddRec():
             app.logger.debug(str(de))
             conn.rollback()
             cursor.close()
-            return decodeStatus(10)
+            return decodeStatus(12)
         else:
             cursor.close()
             return decodeStatus(0)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # delete record
@@ -837,28 +863,278 @@ def GetMyConc():
         cursor.close()
         return decodeStatus(8)
 
-# approve 点赞
+# approve record 点赞
 
 
 @app.route('/apprRec', methods=["POST"])
 def ApprRec():
     cursor = conn.cursor()
-    req=json.loads(request.data)
-    token=req['token']
-    rec_id=int(req['rec_id'])
+    req = json.loads(request.data)
+    token = req['token']
+    rec_id = int(req['rec_id'])
     if r.exists(token):
-        sql_tmep=''
+        sql = 'update record set appr_num=appr_num+1 where rec_id=%d' % (
+            rec_id,)
         try:
-            cursor.execute(sql_tmep)
-
+            cursor.execute(sql)
+            if cursor.rowcount > 0:
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
+            else:
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(33)
+        except Exception as e:
+            app.logger.debug(str(e))
+            cursor.close()
+            return decodeStatus(33)
     else:
         cursor.close()
         return decodeStatus(8)
 
-# comment 评论
+# comment record 评论
+
+
 @app.route('/commRec', methods=["POST"])
 def CommRec():
     cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    rec_id = int(req['rec_id'])
+    content = req['content']
+    if r.exists(token):
+        commer = int(r.get(token))
+        sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
+            rec_id, commer, content, 0)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(34)
+        else:
+            cursor.close()
+            return decodeStatus(0)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# get the comment of record
+
+
+@app.route('/getCommRec', methods=["POST"])
+def GetCommRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    rec_id = int(req['rec_id'])
+    if r.exists(token):
+        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date from comm_rec where rec_id=%d ' % (
+            rec_id,)
+        try:
+            cursor.execute(sql)
+            commList = cursor.fetchall()
+            commL = []
+            if cursor.rowcount > 0:
+                for row in range(len(commList)):
+                    commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
+                                         commList[row][3], commList[row][4], commList[row][5])
+                    commL.append(commentRec)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(37)
+        else:
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# delete the comment of record
+
+
+@app.route('/delCommRec', methods=["POST"])
+def DelCommRec():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    comm_rec_id = int(req['comm_rec_id'])
+    if r.exists(token):
+        operator = int(r.get(token))
+        sql_temp = 'select commer from comm_rec where comm_rec_id=%d' % (
+            comm_rec_id,)
+        sql = 'delete from comm_rec where comm_rec_id=%d' % (comm_rec_id,)
+        try:
+            cursor.execute(sql_temp)
+            commer = cursor.fetchall()
+            if cursor.rowcount > 0:
+                if operator == commer[0][0]:
+                    try:
+                        cursor.execute(sql)
+                        conn.commit()
+                    except Exception as e:
+                        app.logger.debug(str(e))
+                        conn.rollback()
+                        cursor.close()
+                        return decodeStatus(41)
+                    else:
+                        cursor.close()
+                        return decodeStatus(0)
+                else:
+                    cursor.close()
+                    return decodeStatus(15)
+            else:
+                cursor.close()
+                return decodeStatus(41)
+            conn.commit()
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(41)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+# approve comment
+
+
+@app.route('/apprComm', methods=["POST"])
+def ApprComm():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    comm_rec_id = int(req['comm_rec_id'])
+    if r.exists(token):
+        sql = 'update comm_rec set appr_num=appr_num+1 where comm_rec_id=%d' % (
+            comm_rec_id,)
+        try:
+            cursor.execute(sql)
+            if cursor.rowcount > 0:
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
+            else:
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(35)
+        except Exception as e:
+            app.logger.debug(str(e))
+            cursor.close()
+            return decodeStatus(35)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# comment comment
+
+
+@app.route('/commComm', methods=["POST"])
+def CommComm():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    comm_rec_id = int(req['comm_rec_id'])
+    content = req['content']
+    if r.exists(token):
+        commer = int(r.get(token))
+        sql = 'insert into comm_comm (comm_rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
+            comm_rec_id, commer, content, 0)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(36)
+        else:
+            cursor.close()
+            return decodeStatus(0)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# delete comment of comment
+
+
+@app.route('/delCommComm', methods=["POST"])
+def DelCommComm():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    comm_comm_id = int(req['comm_comm_id'])
+    if r.exists(token):
+        operator = int(r.get(token))
+        sql_temp = 'select commer from comm_comm where comm_comm_id=%d' % (
+            comm_comm_id,)
+        sql = 'delete from comm_comm where comm_comm_id=%d' % (comm_comm_id,)
+        try:
+            cursor.execute(sql_temp)
+            commer = cursor.fetchall()
+            if cursor.rowcount > 0:
+                if operator == commer[0][0]:
+                    try:
+                        cursor.execute(sql)
+                        conn.commit()
+                    except Exception as e:
+                        app.logger.debug(str(e))
+                        conn.rollback()
+                        cursor.close()
+                        return decodeStatus(40)
+                    else:
+                        cursor.close()
+                        return decodeStatus(0)
+                else:
+                    cursor.close()
+                    return decodeStatus(15)
+            else:
+                cursor.close()
+                return decodeStatus(39)
+            conn.commit()
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(40)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+# get comment  of comment
+
+
+@app.route('/getCommComm', methods=["POST"])
+def GetCommComm():
+    cursor = conn.cursor()
+    req = json.loads(request.data)
+    token = req['token']
+    comm_rec_id = int(req['comm_rec_id'])
+    if r.exists(token):
+        sql = 'select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date from comm_comm where comm_rec_id=%d ' % (
+            comm_rec_id,)
+        try:
+            cursor.execute(sql)
+            commList = cursor.fetchall()
+            commL = []
+            if cursor.rowcount > 0:
+                for row in range(len(commList)):
+                    commentComm = Comment(commList[row][0], commList[row][1], commList[row][2],
+                                          commList[row][3], commList[row][4], commList[row][5])
+                    commL.append(commentComm)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(38)
+        else:
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 
 if __name__ == '__main__':
