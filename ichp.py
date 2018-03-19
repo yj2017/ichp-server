@@ -120,7 +120,8 @@ def Register():
 @app.route('/login', methods=['POST'])
 def Login():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    #req = json.loads(request.data)
+    req = request.get_json(force=True)
     username = req['username']
     psw = req['psw']
     if username == '' or psw == '':
