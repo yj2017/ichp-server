@@ -14,9 +14,17 @@ from activity import Activity
 from entry import Entry
 from user import User
 from comment import Comment
+import platform
 
 app = Flask(__name__)
-uploadDir = 'D:/uploads/'
+
+def getUploadDir():
+    if platform.system() == 'Windows':
+        return 'D:/uploads/'
+    else:
+        return '/tmp/'
+
+uploadDir = getUploadDir()
 
 status = {0: 'successfully',
           1: 'password error',
