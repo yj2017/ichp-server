@@ -68,7 +68,7 @@ pool = redis.ConnectionPool(
 r = redis.Redis(connection_pool=pool)
 # mysql
 conn = mysql.connector.connect(
-    user='root', password='273841', database='ichp')
+    user='ichp', password='273841', database='ichp')
 
 
 def decodeStatus(code):
