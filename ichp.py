@@ -80,7 +80,7 @@ def decodeStatus(code):
 @app.route('/register', methods=['POST'])
 def Register():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     username = req['username']  # account_name账号名
     psw = req['psw']
     role = int(req['role'])
@@ -120,7 +120,7 @@ def Register():
 @app.route('/login', methods=['POST'])
 def Login():
     cursor = conn.cursor()
-    #req = json.loads(request.data)
+    #req = request.get_json(force=True)
     req = request.get_json(force=True)
     username = req['username']
     psw = req['psw']
@@ -151,7 +151,7 @@ def Login():
 @app.route('/storeInfo', methods=['POST'])
 def StoreInfo():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     telephone = req['telephone']
     name = req['name']
@@ -228,7 +228,7 @@ def Upload():
 @app.route('/addEntry', methods=['POST'])
 def AddEntry():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     editor = int(r.get(token))
     if r.exists(token):
@@ -264,7 +264,7 @@ def AddEntry():
 @app.route('/modifyEntry', methods=['POST'])
 def modifyEntry():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     entry_id = int(req['entry_id'])
     token = req['token']
     editor = int(r.get(token))
@@ -292,7 +292,7 @@ def modifyEntry():
 @app.route('/searchEntry', methods=["POST"])
 def SearchEntry():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     searchEntry = req['searchEntry']
     if r.exists(token):
@@ -323,7 +323,7 @@ def SearchEntry():
 @app.route('/collEntry', methods=["POST"])
 def CollEntry():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     entry_id = int(req['entry_id'])
     if r.exists(token):
@@ -358,7 +358,7 @@ def CollEntry():
 @app.route('/getEntry', methods=["POST"])
 def GetEntry():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     entry_id = int(req['entry_id'])
     if r.exists(token):
@@ -390,7 +390,7 @@ def GetEntry():
 @app.route('/addRec', methods=['POST'])
 def AddRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
         recorder = int(r.get(token))
@@ -422,7 +422,7 @@ def AddRec():
 @app.route('/delRec', methods=["POST"])
 def DelRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
@@ -463,7 +463,7 @@ def DelRec():
 @app.route('/modifyRec',methods=["POST"])
 def ModifyRecord():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     rec_id = int(req['rec_id'])
     token = req['token']
     operator = int(r.get(token))
@@ -498,7 +498,7 @@ def ModifyRecord():
 @app.route('/getALLRec', methods=['POST'])
 def GetAllRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record'
@@ -526,7 +526,7 @@ def GetAllRec():
 @app.route('/getUserRec', methods=["POST"])
 def GetUserRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     recorder = int(req['recorder'])
     if r.exists(token):
@@ -554,7 +554,7 @@ def GetUserRec():
 @app.route('/getRec',methods=["POST"])
 def GetRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id= int(req['rec_id'])
     if r.exists(token):
@@ -582,7 +582,7 @@ def GetRec():
 @app.route('/searchRec', methods=["POST"])
 def SearchRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     searchRec = req['searchRec']
     if r.exists(token):
@@ -613,7 +613,7 @@ def SearchRec():
 @app.route('/collRec', methods=["POST"])
 def CollRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
@@ -648,7 +648,7 @@ def CollRec():
 @app.route('/issueAct', methods=["POST"])
 def IssueAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
         publisher = int(r.get(token))
@@ -685,7 +685,7 @@ def IssueAct():
 @app.route('/delAct', methods=["POST"])
 def DelAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     act_id = int(req['act_id'])
     if r.exists(token):
@@ -726,7 +726,7 @@ def DelAct():
 @app.route('/searchAct', methods=["POST"])
 def SearchAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     searchAct = req['searchAct']
     if r.exists(token):
@@ -757,7 +757,7 @@ def SearchAct():
 @app.route('/getAllAct', methods=["POST"])
 def GetAllAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
         sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity'
@@ -780,7 +780,7 @@ def GetAllAct():
 @app.route('/getUserAct', methods=["POST"])
 def GetUserAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     publisher = int(req['publisher'])
     if r.exists(token):
@@ -806,7 +806,7 @@ def GetUserAct():
 @app.route('/getAct',methods=["POST"])
 def GetAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     act_id = int(req['act_id'])
     if r.exists(token):
@@ -834,7 +834,7 @@ def GetAct():
 @app.route('/collAct', methods=["POST"])
 def CollAct():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     act_id = int(req['act_id'])
     if r.exists(token):
@@ -867,7 +867,7 @@ def CollAct():
 @app.route('/searchUserInfo', methods=["POST"])
 def SearchUserInfo():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     searchW = req['searchW']  # 通过账号模糊搜索
     if r.exists(token):
@@ -898,7 +898,7 @@ def SearchUserInfo():
 @app.route('/getMyConc', methods=["POST"])
 def GetMyConc():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     pay_id = int(r.get(token))  # myself
     if r.exists(token):
@@ -938,7 +938,7 @@ def GetMyConc():
 @app.route('/apprRec', methods=["POST"])
 def ApprRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
@@ -968,7 +968,7 @@ def ApprRec():
 @app.route('/commRec', methods=["POST"])
 def CommRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id = int(req['rec_id'])
     content = req['content']
@@ -997,7 +997,7 @@ def CommRec():
 @app.route('/getCommRec', methods=["POST"])
 def GetCommRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
@@ -1029,7 +1029,7 @@ def GetCommRec():
 @app.route('/delCommRec', methods=["POST"])
 def DelCommRec():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     if r.exists(token):
@@ -1074,7 +1074,7 @@ def DelCommRec():
 @app.route('/apprComm', methods=["POST"])
 def ApprComm():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     if r.exists(token):
@@ -1104,7 +1104,7 @@ def ApprComm():
 @app.route('/commComm', methods=["POST"])
 def CommComm():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     content = req['content']
@@ -1133,7 +1133,7 @@ def CommComm():
 @app.route('/delCommComm', methods=["POST"])
 def DelCommComm():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     comm_comm_id = int(req['comm_comm_id'])
     if r.exists(token):
@@ -1179,7 +1179,7 @@ def DelCommComm():
 @app.route('/getCommComm', methods=["POST"])
 def GetCommComm():
     cursor = conn.cursor()
-    req = json.loads(request.data)
+    req = request.get_json(force=True)
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     if r.exists(token):
