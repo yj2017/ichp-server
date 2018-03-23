@@ -593,7 +593,7 @@ def SearchRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    searchRec = req['searchW']
+    searchW = req['searchW']
     if r.exists(token):
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where title like "%s" ' % (
             '%'+searchW+'%',)
@@ -1127,7 +1127,7 @@ def CommComm():
             cursor.execute(sql)
             conn.commit()
             operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+40 where user_id=%d'%(operator,)
+            sql ='update user set acc_point=acc_point+20 where user_id=%d'%(operator,)
             cursor.execute(sql)
             cursor.fetchall()
         except Exception as de:
@@ -1223,5 +1223,6 @@ def GetCommComm():
 
 
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0',debug=True)
+if __name__ == '__main__':
+    # app.run(host='0.0.0.0',debug=True)
+    app.run('140.143.98.180',debug=True)
