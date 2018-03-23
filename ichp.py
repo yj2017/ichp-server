@@ -406,7 +406,8 @@ def AddRec():
         discribe = req['discribe']
         url = req['url']
         type = req['type']
-        addr = req['addr']  # 地址
+        addr = req['addr']  # 地址]
+
         sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num) values ("%d","%s","%s","%s","%s","%s",%d,%d)' % (
             recorder, title, discribe, url, type, addr, 0, 0)
         try:
@@ -592,10 +593,10 @@ def SearchRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    searchRec = req['searchRec']
+    searchRec = req['searchW']
     if r.exists(token):
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where title like "%s" ' % (
-            '%'+searchRec+'%',)
+            '%'+searchW+'%',)
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
@@ -1092,6 +1093,8 @@ def ApprComm():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
+                
+                
                 cursor.close()
                 return decodeStatus(0)
             else:
@@ -1123,6 +1126,10 @@ def CommComm():
         try:
             cursor.execute(sql)
             conn.commit()
+            operator=int(r.get(token))
+            sql ='update user set acc_point=acc_point+40 where user_id=%d'%(operator,)
+            cursor.execute(sql)
+            cursor.fetchall()
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -1212,6 +1219,8 @@ def GetCommComm():
     else:
         cursor.close()
         return decodeStatus(8)
+
+
 
 
 if __name__ == '__main__':
