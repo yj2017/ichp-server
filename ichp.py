@@ -174,6 +174,9 @@ def StoreInfo():
             telephone, name, sign, user_id, image_src)
         try:
             cursor.execute(sql)
+            operator=int(r.get(token))
+            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+            cursor.execute(sql)
             conn.commit()
         except:
             conn.rollback()
@@ -253,6 +256,9 @@ def AddEntry():
                 name, content, editor)
             try:
                 cursor.execute(sql)
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+                cursor.execute(sql)
                 conn.commit()
             except Exception as de:
                 app.logger.debug(str(de))
@@ -281,6 +287,9 @@ def modifyEntry():
         sql = 'update entry set content="%s",editor=%d where entry_id=%d' % (
             content, editor, entry_id)
         try:
+            cursor.execute(sql)
+            operator=int(r.get(token))
+            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -343,6 +352,9 @@ def CollEntry():
             sql = 'insert into coll_entry (collector,entry_id) values (%d,%d)' % (
                 collector, entry_id)
             try:
+                cursor.execute(sql)
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -407,11 +419,19 @@ def AddRec():
         url = req['url']
         type = req['type']
         addr = req['addr']  # 地址]
-
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num) values ("%d","%s","%s","%s","%s","%s",%d,%d)' % (
+        labels=req['labels_id_str']
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num) values (%d,"%s","%s","%s","%s","%s",%d,%d)' % (
             recorder, title, discribe, url, type, addr, 0, 0)
         try:
             cursor.execute(sql)
+            operator=int(r.get(token))
+            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+            cursor.execute(sql)
+            sql_query='select rec_id from record where recorder=%d and url="%s"'%(recorder,url)
+            cursor.execute(sql_query)
+            rec_id=cursor.fetchall()[0][0]
+            sql_label='insert into rec_label(rec_id,labels_id_str) values (%d,"%s")'%(rec_id,labels)
+            cursor.execute(sql_label)
             conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
@@ -420,7 +440,7 @@ def AddRec():
             return decodeStatus(12)
         else:
             cursor.close()
-            return decodeStatus(0)
+            return json.dumps({"msg":"successfully","code":0,"date":labels})
     else:
         cursor.close()
         return decodeStatus(8)
@@ -635,6 +655,9 @@ def CollRec():
                 collector, rec_id)
             try:
                 cursor.execute(sql)
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                cursor.execute(sql)
                 conn.commit()
             except Exception as de:
                 app.logger.debug(str(de))
@@ -673,6 +696,9 @@ def IssueAct():
             sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src) values (%d,"%s","%s","%s","%s","%s")' % (
                 publisher, title, content, hold_date, hold_addr, act_src)
             try:
+                cursor.execute(sql)
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -857,6 +883,9 @@ def CollAct():
                 collector, act_id)
             try:
                 cursor.execute(sql)
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                cursor.execute(sql)
                 conn.commit()
             except Exception as de:
                 app.logger.debug(str(de))
@@ -957,6 +986,10 @@ def ApprRec():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                cursor.execute(sql)
+                conn.commit()
                 cursor.close()
                 return decodeStatus(0)
             else:
@@ -986,6 +1019,10 @@ def CommRec():
         sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
             rec_id, commer, content, 0)
         try:
+            cursor.execute(sql)
+            conn.commit()
+            operator=int(r.get(token))
+            sql ='update user set acc_point=acc_point+20 where user_id=%d'%(operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -1093,8 +1130,10 @@ def ApprComm():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
-                
-                
+                operator=int(r.get(token))
+                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                cursor.execute(sql)
+                conn.commit()
                 cursor.close()
                 return decodeStatus(0)
             else:
@@ -1129,7 +1168,7 @@ def CommComm():
             operator=int(r.get(token))
             sql ='update user set acc_point=acc_point+20 where user_id=%d'%(operator,)
             cursor.execute(sql)
-            cursor.fetchall()
+            conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -1221,8 +1260,5 @@ def GetCommComm():
         return decodeStatus(8)
 
 
-
-
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0',debug=True)
-    app.run('140.143.98.180',debug=True)
+    app.run(host='0.0.0.0',debug=True)
