@@ -241,8 +241,8 @@ def AddEntry():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    editor = int(r.get(token))
     if r.exists(token):
+        editor = int(r.get(token))
         name = req['name']
         content = req['content']
         sql_temp = 'select * from entry where name ="%s"' % (name,)
@@ -280,9 +280,9 @@ def modifyEntry():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     entry_id = int(req['entry_id'])
-    token = req['token']
-    editor = int(r.get(token))
+    token = req['token']   
     if r.exists(token):
+        editor = int(r.get(token))
         content = req['content']
         sql = 'update entry set content="%s",editor=%d where entry_id=%d' % (
             content, editor, entry_id)
@@ -495,8 +495,8 @@ def ModifyRecord():
     req = request.get_json(force=True)
     rec_id = int(req['rec_id'])
     token = req['token']
-    operator = int(r.get(token))
     if r.exists(token):
+        operator = int(r.get(token))
         sql_temp = 'select recorder from record where rec_id=%d' % (rec_id,)
         cursor.execute(sql_temp)
         recorder = cursor.fetchall()
@@ -817,8 +817,8 @@ def GetUserAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    publisher = int(req['publisher'])
     if r.exists(token):
+        publisher = int(req['publisher'])
         sql = 'select act_id,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher=%d' % (
             publisher,)
         try:
@@ -843,8 +843,8 @@ def GetAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    act_id = int(req['act_id'])
     if r.exists(token):
+        act_id = int(req['act_id'])
         sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where act_id=%d' % (
             act_id,)
         try:
@@ -871,8 +871,8 @@ def CollAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    act_id = int(req['act_id'])
     if r.exists(token):
+        act_id = int(req['act_id'])
         sql_act = 'select * from activity where act_id= %d' % (act_id,)
         cursor.execute(sql_act)
         temp = cursor.fetchall()
@@ -938,8 +938,8 @@ def GetMyConc():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    pay_id = int(r.get(token))  # myself
     if r.exists(token):
+        pay_id = int(r.get(token))  # myself
         sql_temp = 'select be_paid_id from attention_info where pay_id=%d' % (
             pay_id,)
         try:
@@ -978,8 +978,8 @@ def ApprRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    rec_id = int(req['rec_id'])
     if r.exists(token):
+        rec_id = int(req['rec_id'])
         sql = 'update record set appr_num=appr_num+1 where rec_id=%d' % (
             rec_id,)
         try:
@@ -1012,9 +1012,9 @@ def CommRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    rec_id = int(req['rec_id'])
     content = req['content']
     if r.exists(token):
+        rec_id = int(req['rec_id'])
         commer = int(r.get(token))
         sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
             rec_id, commer, content, 0)
@@ -1045,8 +1045,8 @@ def GetCommRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    rec_id = int(req['rec_id'])
     if r.exists(token):
+        rec_id = int(req['rec_id'])
         sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date from comm_rec where rec_id=%d ' % (
             rec_id,)
         try:
