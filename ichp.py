@@ -524,7 +524,7 @@ def ModifyRecord():
 
 
 # get record list
-@app.route('/getALLRec', methods=['POST'])
+@app.route('/getAllRec', methods=['POST'])
 def GetAllRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
