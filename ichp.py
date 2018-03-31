@@ -68,7 +68,9 @@ status = {0: 'successfully',
           39: 'no such comment record id ',
           40: 'delete comment of comment  failed',
           41: 'delete comment of record failed',
-          42:'no such comment comment id '
+          42:'no such comment comment id ',
+          43:'recommend record failed',
+          44:'recommend activity failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -1252,8 +1254,94 @@ def GetCommComm():
         cursor.close()
         return decodeStatus(8)
 
+#recomend rec
+@app.route('/recommendRec',methods=["POST"])
+def recommendRec():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    addr=req['addr']
+    if r.exists(token):
+        operator=int(r.get(token))
+        sql='select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc'%(operator,)
+        try:
+            cursor.execute(sql)
+            listRec = cursor.fetchall()
+            recL = []
+            if cursor.rowcount > 0 and cursor.rowcount<=2:
+                # 返回两条推荐记录
+                for row in range(cursor.rowcount):
+                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            elif cursor.rowcount>2:
+                for row in range(cursor.rowcount):
+                    if listRec[row][5]==addr:#地点
+                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                        recL.append(record)
+                if recL.count>2:
+                    recL=recL[:2]
+                else:
+                    for row in range(2):
+                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                        recL.append(record)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(43)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+#recommend act
+@app.route('/recommendAct',methods=["POST"])
+def recommendAct():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    addr=req['addr']
+    if r.exists(token):
+        operator=int(r.get(token))
+        sql='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher != %d order by issue_date desc' %(operator,)
+        try:
+            cursor.execute(sql)
+            listAct = cursor.fetchall()
+            actL = []
+            if cursor.rowcount > 0 and cursor.rowcount<=2:
+                # 返回两条推荐
+                app.logger.debug(cursor.rowcount)
+                for row in range(cursor.rowcount):
+                    activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
+                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                    actL.append(activity)
+            elif cursor.rowcount>2:
+                for row in range(cursor.rowcount):
+                    if listAct[row][5]==addr:#地点
+                        activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
+                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                app.logger.debug(len(actL))
+                if len(actL)>2:
+                    actL=actL[:2]
+                else:
+                    for row in range(2):
+                        activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
+                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                        actL.append(activity)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(44)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 
-
-#if __name__ == '__main__':
-#   app.run(host='0.0.0.0',debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',debug=True)
