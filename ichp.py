@@ -204,7 +204,6 @@ def allowed_file(filename):
 def Upload():
     try:
         token = request.form['token']  # client 传来的token属性.token为键，uid为值
-        app.logger.debug(str(token))
         if r.exists(token):  # 登录状态
             f = request.files['the_file']
             app.logger.debug(str(f.filename))
@@ -419,19 +418,14 @@ def AddRec():
         url = req['url']
         type = req['type']
         addr = req['addr']  # 地址]
-        labels=req['labels_id_str']
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num) values (%d,"%s","%s","%s","%s","%s",%d,%d)' % (
-            recorder, title, discribe, url, type, addr, 0, 0)
+        labels_id_str=req['labels_id_str']
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%s","%s",%d,%d,"%s")' % (
+            recorder, title, discribe, url, type, addr, 0, 0,labels_id_str)
         try:
             cursor.execute(sql)
             operator=int(r.get(token))
             sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
             cursor.execute(sql)
-            sql_query='select rec_id from record where recorder=%d and url="%s"'%(recorder,url)
-            cursor.execute(sql_query)
-            rec_id=cursor.fetchall()[0][0]
-            sql_label='insert into rec_label(rec_id,labels_id_str) values (%d,"%s")'%(rec_id,labels)
-            cursor.execute(sql_label)
             conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
@@ -440,7 +434,7 @@ def AddRec():
             return decodeStatus(12)
         else:
             cursor.close()
-            return json.dumps({"msg":"successfully","code":0,"date":labels})
+            return json.dumps({"msg":"successfully","code":0})
     else:
         cursor.close()
         return decodeStatus(8)
@@ -530,7 +524,7 @@ def GetAllRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record'
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record'
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
@@ -540,7 +534,7 @@ def GetAllRec():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -559,7 +553,7 @@ def GetUserRec():
     token = req['token']
     recorder = int(req['recorder'])
     if r.exists(token):
-        sql = 'select rec_id, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where recorder=%d' % recorder
+        sql = 'select rec_id, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where recorder=%d' % recorder
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
@@ -567,7 +561,7 @@ def GetUserRec():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], recorder, listRec[row][1], listRec[row][2], listRec[row]
-                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8])
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9])
                     recL.append(record)
                     app.logger.debug(recL)
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -587,7 +581,7 @@ def GetRec():
     token = req['token']
     rec_id= int(req['rec_id'])
     if r.exists(token):
-        sql = 'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where rec_id=%d' % rec_id
+        sql = 'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where rec_id=%d' % rec_id
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
@@ -595,7 +589,7 @@ def GetRec():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
-                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9])
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9],listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
                     cursor.close()
@@ -615,7 +609,7 @@ def SearchRec():
     token = req['token']
     searchW = req['searchW']
     if r.exists(token):
-        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe from record where title like "%s" ' % (
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where title like "%s" ' % (
             '%'+searchW+'%',)
         try:
             cursor.execute(sql)
@@ -625,7 +619,7 @@ def SearchRec():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -1260,5 +1254,5 @@ def GetCommComm():
         return decodeStatus(8)
 
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0',debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',debug=True)
