@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"http:c4X-etSkzHTpZsHoPBvjshXtTbKOtGeGVgmMrVbR:ichp-bucket": {"deadline": 1522658887, "ioHosts": ["http://iovip-z2.qbox.me"], "upHosts": ["http://up-z2.qiniu.com", "http://upload-z2.qiniu.com", "-H up-z2.qiniu.com http://14.152.37.4"]}}
+=======
+{"http:c4X-etSkzHTpZsHoPBvjshXtTbKOtGeGVgmMrVbR:ichp-bucket": {"upHosts": ["http://up-z2.qiniu.com", "http://upload-z2.qiniu.com", "-H up-z2.qiniu.com http://14.152.37.4"], "ioHosts": ["http://iovip-z2.qbox.me"], "deadline": 1522555311}}
+>>>>>>> 7ffc14ae8a35f0788acbd16d3fdd41293d6643fe
