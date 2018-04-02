@@ -17,6 +17,8 @@ from comment import Comment
 import platform
 
 app = Flask(__name__)
+app.logger.addHandler(logging.FileHandler('ichp.log'))
+app.debug=True
 
 def getUploadDir():
     if platform.system() == 'Windows':
@@ -188,6 +190,57 @@ def StoreInfo():
             return decodeStatus(0)
 
 
+#modify user 's image
+@app.route('/modifyImage',methods=["POST"])
+def ModifyImage():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    image_src = req['image_src']  # 头像图片链接
+    user_id = int(r.get(token))
+    if user_id == None:
+        cursor.close()
+        return decodeStatus(8)
+    else:
+        sql = 'update user set image_src="%s" where user_id=%d' % (
+             image_src,user_id)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(10)
+        if cursor.rowcount > 0:
+            cursor.close()
+            return decodeStatus(0)
+
+#modify user's sign
+@app.route('/modifySign',methods=["POST"])
+def ModifySign():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    sign = req['sign']  # 头像图片链接
+    user_id = int(r.get(token))
+    if user_id == None:
+        cursor.close()
+        return decodeStatus(8)
+    else:
+        sql = 'update user set sign="%s" where user_id=%d' % (
+             sign,user_id)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(10)
+        if cursor.rowcount > 0:
+            cursor.close()
+            return decodeStatus(0)
+
+
 # allowed file type
 ALLOWED_EXTENSIONS = set(
     ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx', 'doc',
@@ -302,6 +355,7 @@ def modifyEntry():
             cursor.close()
             return decodeStatus(0)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # search entry
@@ -902,8 +956,10 @@ def CollAct():
                 cursor.close()
                 return decodeStatus(0)
         else:
+            cursor.close()
             return decodeStatus(22)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
@@ -921,19 +977,18 @@ def SearchUserInfo():
             cursor.execute(sql)
             listUser = cursor.fetchall()
             userL = []
-            if cursor.rowcount > 0:
-                for row in range(cursor.rowcount):
-                    user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
+            for row in range(cursor.rowcount):
+                user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
                                 listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
-                    userL.append(user)
-                return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-            else:
-                return decodeStatus(22)
+                userL.append(user)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(30)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # get my Concerned list
@@ -1111,7 +1166,6 @@ def DelCommRec():
             else:
                 cursor.close()
                 return decodeStatus(41)
-            conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -1223,7 +1277,6 @@ def DelCommComm():
             else:
                 cursor.close()
                 return decodeStatus(42)
-            conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -1352,6 +1405,32 @@ def recommendAct():
     else:
         cursor.close()
         return decodeStatus(8)
+
+#modify entry's backgroud
+@app.route('/modifyEntryBg',methods=['POST'])
+def ModifyEntryBg():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    url = req['url']  # 图片链接
+    entry_id=req['entry_id']
+    user_id = int(r.get(token))
+    if user_id == None:
+        cursor.close()
+        return decodeStatus(8)
+    else:
+        sql = 'update entry set url="%s" where entry_id=%d' % (
+             url,entry_id)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(10)
+        if cursor.rowcount > 0:
+            cursor.close()
+            return decodeStatus(0)
 
 #if __name__ == '__main__':
 #   app.run(host='0.0.0.0',debug=True)
