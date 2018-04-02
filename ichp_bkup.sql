@@ -1,5 +1,5 @@
 ﻿# Host: localhost  (Version 5.7.17-log)
-# Date: 2018-04-01 17:49:03
+# Date: 2018-04-02 13:42:37
 # Generator: MySQL-Front 5.4  (Build 3.52)
 # Internet: http://www.mysqlfront.de/
 
@@ -92,7 +92,7 @@ CREATE TABLE `entry` (
   `name` char(12) NOT NULL DEFAULT '',
   `content` text NOT NULL,
   `editor` int(11) DEFAULT NULL,
-  `url` text  NULL,
+  `url` text,
   PRIMARY KEY (`entry_id`),
   KEY `editor` (`editor`),
   CONSTRAINT `entry_ibfk_1` FOREIGN KEY (`editor`) REFERENCES `user` (`user_id`)
@@ -102,7 +102,7 @@ CREATE TABLE `entry` (
 # Data for table "entry"
 #
 
-INSERT INTO `entry` VALUES (6,'皮影戏','by yj',1111),(7,'古法','源于湘西',1111);
+INSERT INTO `entry` VALUES (6,'皮影戏','by yj',1111,NULL),(7,'古法','源于湘西',1111,NULL);
 
 #
 # Structure for table "comm_rec"
