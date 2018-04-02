@@ -539,12 +539,14 @@ def GetAllRec():
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
+            cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(16)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
@@ -805,6 +807,7 @@ def GetAllAct():
             cursor.close()
             return decodeStatus(28)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
