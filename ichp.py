@@ -530,7 +530,6 @@ def GetAllRec():
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
-            app.logger.debug(listRec)
             recL = []
             if cursor.rowcount > 0:
                 # 返回列表
@@ -538,7 +537,6 @@ def GetAllRec():
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
                     recL.append(record)
-                    app.logger.debug(recL)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
@@ -568,12 +566,14 @@ def GetUserRec():
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9])
                     recL.append(record)
                     app.logger.debug(recL)
+            cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(16)
     else:
+        cursor.close()
         return decodeStatus(8)
 
  # search record
@@ -596,13 +596,14 @@ def GetRec():
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9],listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
-                    cursor.close()
+            cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(16)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 
@@ -708,8 +709,10 @@ def IssueAct():
                 cursor.close()
                 return decodeStatus(0)
         else:
+            cursor.close()
             return decodeStatus(15)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # delete activity
@@ -774,14 +777,16 @@ def SearchAct():
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
                                         [4], listAct[row][5], listAct[row][6], listAct[row][7])
                     actL.append(activity)
-                    app.logger.debug(actL)
+                cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            cursor.close()
             return decodeStatus(32)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(18)
     else:
+        cursor.close()
         return decodeStatus(8)
 
 # get activity
@@ -798,9 +803,11 @@ def GetAllAct():
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
-            activity = Activity(act[0][0], act[0][1],
+            for row in range(cursor.rowcount):
+                activity = Activity(act[0][0], act[0][1],
                                 act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
-            actL.append(activity)
+                actL.append(activity)
+            cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
