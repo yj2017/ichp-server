@@ -593,6 +593,7 @@ def GetAllRec():
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
                     recL.append(record)
             cursor.close()
+            app.logger.debug(recL)
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
@@ -1414,7 +1415,7 @@ def ModifyEntryBg():
     req = request.get_json(force=True)
     token = req['token']
     url = req['url']  # 图片链接
-    entry_id=req['entry_id']
+    entry_id=int(req['entry_id'])
     user_id = int(r.get(token))
     if user_id == None:
         cursor.close()
