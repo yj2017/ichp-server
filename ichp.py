@@ -15,6 +15,7 @@ from entry import Entry
 from user import User
 from comment import Comment
 import platform
+import logging
 
 app = Flask(__name__)
 app.logger.addHandler(logging.FileHandler('ichp.log'))
