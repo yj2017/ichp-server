@@ -92,6 +92,7 @@ CREATE TABLE `entry` (
   `name` char(12) NOT NULL DEFAULT '',
   `content` text NOT NULL,
   `editor` int(11) DEFAULT NULL,
+  `url` text  NULL,
   PRIMARY KEY (`entry_id`),
   KEY `editor` (`editor`),
   CONSTRAINT `entry_ibfk_1` FOREIGN KEY (`editor`) REFERENCES `user` (`user_id`)

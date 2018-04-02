@@ -245,6 +245,7 @@ def AddEntry():
         editor = int(r.get(token))
         name = req['name']
         content = req['content']
+        url=req['url']
         sql_temp = 'select * from entry where name ="%s"' % (name,)
         cursor.execute(sql_temp)
         cursor.fetchall()
@@ -252,8 +253,8 @@ def AddEntry():
             cursor.close()
             return decodeStatus(14)
         else:
-            sql = 'insert into entry (name,content,editor) values ("%s","%s",%d)' % (
-                name, content, editor)
+            sql = 'insert into entry (name,content,editor,url) values ("%s","%s",%d,"%s")' % (
+                name, content, editor,url)
             try:
                 cursor.execute(sql)
                 operator=int(r.get(token))
@@ -313,7 +314,7 @@ def SearchEntry():
     token = req['token']
     searchEntry = req['searchEntry']
     if r.exists(token):
-        sql = 'select entry_id,name,content,editor from entry  where name like "%s" ' % (
+        sql = 'select entry_id,name,content,editor,url from entry  where name like "%s" ' % (
             '%'+searchEntry+'%',)
         try:
             cursor.execute(sql)
@@ -323,7 +324,7 @@ def SearchEntry():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     entry = Entry(listEnt[row][0], listEnt[row]
-                                  [1], listEnt[row][2], listEnt[row][3])
+                                  [1], listEnt[row][2], listEnt[row][3],listEnt[row][4])
                     entL.append(entry)
                     app.logger.debug(entL)
             cursor.close()
@@ -382,7 +383,7 @@ def GetEntry():
     token = req['token']
     entry_id = int(req['entry_id'])
     if r.exists(token):
-        sql = 'select entry_id,name,content,editor from entry where entry_id=%d' % (
+        sql = 'select entry_id,name,content,editor,url from entry where entry_id=%d' % (
             entry_id,)
         try:
             cursor.execute(sql)
@@ -390,7 +391,7 @@ def GetEntry():
             entryL = []
             if cursor.rowcount > 0:
                 entry = Entry(entry[0][0], entry[0][1],
-                              entry[0][2], entry[0][3])
+                              entry[0][2], entry[0][3],entry[0][4])
                 entryL.append(entry)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
