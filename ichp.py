@@ -1134,7 +1134,7 @@ def GetCommRec():
             rec_id,)
         cursor.execute(sql_temp)
         commer = cursor.fetchall()[0][0]
-        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec where rec_id=%d and user_id=%d' % (
+        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where rec_id=%d and user_id=%d' % (
             rec_id, commer)
         try:
             cursor.execute(sql)
