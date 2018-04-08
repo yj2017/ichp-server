@@ -1131,7 +1131,7 @@ def GetCommRec():
     if r.exists(token):
         rec_id = int(req['rec_id'])
         sql_temp = 'select commer from comm_comm where comm_rec_id=%d' % (
-            comm_rec_id,)
+            rec_id,)
         cursor.execute(sql_temp)
         commer = cursor.fetchall()[0][0]
         sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image,account_name from comm_rec where rec_id=%d and user_id=%d' % (
