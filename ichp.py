@@ -19,13 +19,15 @@ import logging
 
 app = Flask(__name__)
 app.logger.addHandler(logging.FileHandler('ichp.log'))
-app.debug=True
+app.debug = True
+
 
 def getUploadDir():
     if platform.system() == 'Windows':
         return 'D:/uploads/'
     else:
         return '/tmp/'
+
 
 uploadDir = getUploadDir()
 
@@ -71,11 +73,11 @@ status = {0: 'successfully',
           39: 'no such comment record id ',
           40: 'delete comment of comment  failed',
           41: 'delete comment of record failed',
-          42:'no such comment comment id ',
-          43:'recommend record failed',
-          44:'recommend activity failed',
-          45:'get user information failed',
-          46:'delete user failed'
+          42: 'no such comment comment id ',
+          43: 'recommend record failed',
+          44: 'recommend activity failed',
+          45: 'get user information failed',
+          46: 'delete user failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -90,6 +92,7 @@ def decodeStatus(code):
     return json.dumps({"msg": status[code], "code": code})
 
 # This is register
+
 
 @app.route('/register', methods=['POST'])
 def Register():
@@ -180,8 +183,9 @@ def StoreInfo():
             telephone, name, sign, user_id, image_src)
         try:
             cursor.execute(sql)
-            operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+            operator = int(r.get(token))
+            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                operator,)
             cursor.execute(sql)
             conn.commit()
         except:
@@ -193,8 +197,8 @@ def StoreInfo():
             return decodeStatus(0)
 
 
-#modify user 's image
-@app.route('/modifyImage',methods=["POST"])
+# modify user 's image
+@app.route('/modifyImage', methods=["POST"])
 def ModifyImage():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -206,7 +210,7 @@ def ModifyImage():
         return decodeStatus(8)
     else:
         sql = 'update user set image_src="%s" where user_id=%d' % (
-             image_src,user_id)
+            image_src, user_id)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -218,8 +222,10 @@ def ModifyImage():
             cursor.close()
             return decodeStatus(0)
 
-#modify user's sign
-@app.route('/modifySign',methods=["POST"])
+# modify user's sign
+
+
+@app.route('/modifySign', methods=["POST"])
 def ModifySign():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -231,7 +237,7 @@ def ModifySign():
         return decodeStatus(8)
     else:
         sql = 'update user set sign="%s" where user_id=%d' % (
-             sign,user_id)
+            sign, user_id)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -301,7 +307,7 @@ def AddEntry():
         editor = int(r.get(token))
         name = req['name']
         content = req['content']
-        url=req['url']
+        url = req['url']
         sql_temp = 'select * from entry where name ="%s"' % (name,)
         cursor.execute(sql_temp)
         cursor.fetchall()
@@ -310,11 +316,12 @@ def AddEntry():
             return decodeStatus(14)
         else:
             sql = 'insert into entry (name,content,editor,url) values ("%s","%s",%d,"%s")' % (
-                name, content, editor,url)
+                name, content, editor, url)
             try:
                 cursor.execute(sql)
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -337,7 +344,7 @@ def modifyEntry():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     entry_id = int(req['entry_id'])
-    token = req['token']   
+    token = req['token']
     if r.exists(token):
         editor = int(r.get(token))
         content = req['content']
@@ -345,8 +352,9 @@ def modifyEntry():
             content, editor, entry_id)
         try:
             cursor.execute(sql)
-            operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+            operator = int(r.get(token))
+            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -381,7 +389,7 @@ def SearchEntry():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     entry = Entry(listEnt[row][0], listEnt[row]
-                                  [1], listEnt[row][2], listEnt[row][3],listEnt[row][4])
+                                  [1], listEnt[row][2], listEnt[row][3], listEnt[row][4])
                     entL.append(entry)
                     app.logger.debug(entL)
             cursor.close()
@@ -411,8 +419,9 @@ def CollEntry():
                 collector, entry_id)
             try:
                 cursor.execute(sql)
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -448,7 +457,7 @@ def GetEntry():
             entryL = []
             if cursor.rowcount > 0:
                 entry = Entry(entry[0][0], entry[0][1],
-                              entry[0][2], entry[0][3],entry[0][4])
+                              entry[0][2], entry[0][3], entry[0][4])
                 entryL.append(entry)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -477,13 +486,14 @@ def AddRec():
         url = req['url']
         type = req['type']
         addr = req['addr']  # 地址]
-        labels_id_str=req['labels_id_str']
+        labels_id_str = req['labels_id_str']
         sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%s","%s",%d,%d,"%s")' % (
-            recorder, title, discribe, url, type, addr, 0, 0,labels_id_str)
+            recorder, title, discribe, url, type, addr, 0, 0, labels_id_str)
         try:
             cursor.execute(sql)
-            operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+            operator = int(r.get(token))
+            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -493,7 +503,7 @@ def AddRec():
             return decodeStatus(12)
         else:
             cursor.close()
-            return json.dumps({"msg":"successfully","code":0})
+            return json.dumps({"msg": "successfully", "code": 0})
     else:
         cursor.close()
         return decodeStatus(8)
@@ -542,7 +552,8 @@ def DelRec():
 
 # modify record
 
-@app.route('/modifyRec',methods=["POST"])
+
+@app.route('/modifyRec', methods=["POST"])
 def ModifyRecord():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -592,7 +603,7 @@ def GetAllRec():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
             cursor.close()
             app.logger.debug(str(recL))
@@ -621,7 +632,7 @@ def GetUserRec():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], recorder, listRec[row][1], listRec[row][2], listRec[row]
-                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9])
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -636,12 +647,13 @@ def GetUserRec():
 
  # search record
 
-@app.route('/getRec',methods=["POST"])
+
+@app.route('/getRec', methods=["POST"])
 def GetRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    rec_id= int(req['rec_id'])
+    rec_id = int(req['rec_id'])
     if r.exists(token):
         sql = 'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where rec_id=%d' % rec_id
         try:
@@ -651,7 +663,7 @@ def GetRec():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
-                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8],listRec[row][9],listRec[row][10])
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -682,7 +694,7 @@ def SearchRec():
                 # 返回列表
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -712,8 +724,9 @@ def CollRec():
                 collector, rec_id)
             try:
                 cursor.execute(sql)
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -754,8 +767,9 @@ def IssueAct():
                 publisher, title, content, hold_date, hold_addr, act_src)
             try:
                 cursor.execute(sql)
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+100 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -863,7 +877,7 @@ def GetAllAct():
             actL = []
             for row in range(cursor.rowcount):
                 activity = Activity(act[0][0], act[0][1],
-                                act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
+                                    act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -902,7 +916,8 @@ def GetUserAct():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/getAct',methods=["POST"])
+
+@app.route('/getAct', methods=["POST"])
 def GetAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -915,8 +930,8 @@ def GetAct():
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
-            activity = Activity(act[0][0], 
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6],act[0][7])
+            activity = Activity(act[0][0],
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -947,8 +962,9 @@ def CollAct():
                 collector, act_id)
             try:
                 cursor.execute(sql)
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -983,7 +999,7 @@ def SearchUserInfo():
             userL = []
             for row in range(cursor.rowcount):
                 user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
-                                listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                            listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
                 userL.append(user)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1051,8 +1067,9 @@ def ApprRec():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
                 cursor.close()
@@ -1086,8 +1103,9 @@ def CommRec():
         try:
             cursor.execute(sql)
             conn.commit()
-            operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+20 where user_id=%d'%(operator,)
+            operator = int(r.get(token))
+            sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
+                operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -1112,8 +1130,12 @@ def GetCommRec():
     token = req['token']
     if r.exists(token):
         rec_id = int(req['rec_id'])
-        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date from comm_rec where rec_id=%d ' % (
-            rec_id,)
+        sql_temp = 'select commer from comm_comm where comm_rec_id=%d' % (
+            comm_rec_id,)
+        cursor.execute(sql_temp)
+        commer = cursor.fetchall()[0][0]
+        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image,account_name from comm_rec where rec_id=%d and user_id=%d' % (
+            rec_id, commer)
         try:
             cursor.execute(sql)
             commList = cursor.fetchall()
@@ -1121,7 +1143,7 @@ def GetCommRec():
             if cursor.rowcount > 0:
                 for row in range(len(commList)):
                     commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
-                                         commList[row][3], commList[row][4], commList[row][5])
+                                         commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                     commL.append(commentRec)
         except Exception as de:
             app.logger.debug(str(de))
@@ -1194,8 +1216,9 @@ def ApprComm():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
-                operator=int(r.get(token))
-                sql ='update user set acc_point=acc_point+10 where user_id=%d'%(operator,)
+                operator = int(r.get(token))
+                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    operator,)
                 cursor.execute(sql)
                 conn.commit()
                 cursor.close()
@@ -1229,8 +1252,9 @@ def CommComm():
         try:
             cursor.execute(sql)
             conn.commit()
-            operator=int(r.get(token))
-            sql ='update user set acc_point=acc_point+20 where user_id=%d'%(operator,)
+            operator = int(r.get(token))
+            sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
+                operator,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -1300,8 +1324,12 @@ def GetCommComm():
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     if r.exists(token):
-        sql = 'select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date from comm_comm where comm_rec_id=%d ' % (
+        sql_temp = 'select commer from comm_comm where comm_rec_id=%d' % (
             comm_rec_id,)
+        cursor.execute(sql_temp)
+        commer = cursor.fetchall()[0][0]
+        sql = 'select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image,account_name from comm_comm,user where comm_rec_id=%d and user_id=%d' % (
+            comm_rec_id, commer)
         try:
             cursor.execute(sql)
             commList = cursor.fetchall()
@@ -1309,7 +1337,7 @@ def GetCommComm():
             if cursor.rowcount > 0:
                 for row in range(len(commList)):
                     commentComm = Comment(commList[row][0], commList[row][1], commList[row][2],
-                                          commList[row][3], commList[row][4], commList[row][5])
+                                          commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                     commL.append(commentComm)
         except Exception as de:
             app.logger.debug(str(de))
@@ -1322,39 +1350,42 @@ def GetCommComm():
         cursor.close()
         return decodeStatus(8)
 
-#recomend rec
-@app.route('/recommendRec',methods=["POST"])
+# recomend rec
+
+
+@app.route('/recommendRec', methods=["POST"])
 def recommendRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    addr=req['addr']
+    addr = req['addr']
     if r.exists(token):
-        operator=int(r.get(token))
-        sql='select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc'%(operator,)
+        operator = int(r.get(token))
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc' % (
+            operator,)
         try:
             cursor.execute(sql)
             listRec = cursor.fetchall()
             recL = []
-            if cursor.rowcount > 0 and cursor.rowcount<=2:
+            if cursor.rowcount > 0 and cursor.rowcount <= 2:
                 # 返回两条推荐记录
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
-            elif cursor.rowcount>2:
+            elif cursor.rowcount > 2:
                 for row in range(cursor.rowcount):
-                    if listRec[row][5]==addr:#地点
+                    if listRec[row][5] == addr:  # 地点
                         record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                         recL.append(record)
-                if recL.count>2:
-                    recL=recL[:2]
+                if recL.count > 2:
+                    recL = recL[:2]
                 else:
                     for row in range(2):
                         record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9],listRec[row][10])
+                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                         recL.append(record)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1366,39 +1397,42 @@ def recommendRec():
         cursor.close()
         return decodeStatus(8)
 
-#recommend act
-@app.route('/recommendAct',methods=["POST"])
+# recommend act
+
+
+@app.route('/recommendAct', methods=["POST"])
 def recommendAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    addr=req['addr']
+    addr = req['addr']
     if r.exists(token):
-        operator=int(r.get(token))
-        sql='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher != %d order by issue_date desc' %(operator,)
+        operator = int(r.get(token))
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher != %d order by issue_date desc' % (
+            operator,)
         try:
             cursor.execute(sql)
             listAct = cursor.fetchall()
             actL = []
-            if cursor.rowcount > 0 and cursor.rowcount<=2:
+            if cursor.rowcount > 0 and cursor.rowcount <= 2:
                 # 返回两条推荐
                 app.logger.debug(cursor.rowcount)
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7])
                     actL.append(activity)
-            elif cursor.rowcount>2:
+            elif cursor.rowcount > 2:
                 for row in range(cursor.rowcount):
-                    if listAct[row][5]==addr:#地点
+                    if listAct[row][5] == addr:  # 地点
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7])
                 app.logger.debug(len(actL))
-                if len(actL)>2:
-                    actL=actL[:2]
+                if len(actL) > 2:
+                    actL = actL[:2]
                 else:
                     for row in range(2):
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                    [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7])
                         actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1410,21 +1444,23 @@ def recommendAct():
         cursor.close()
         return decodeStatus(8)
 
-#modify entry's backgroud
-@app.route('/modifyEntryBg',methods=['POST'])
+# modify entry's backgroud
+
+
+@app.route('/modifyEntryBg', methods=['POST'])
 def ModifyEntryBg():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     url = req['url']  # 图片链接
-    entry_id=int(req['entry_id'])
+    entry_id = int(req['entry_id'])
     user_id = int(r.get(token))
     if user_id == None:
         cursor.close()
         return decodeStatus(8)
     else:
         sql = 'update entry set url="%s" where entry_id=%d' % (
-             url,entry_id)
+            url, entry_id)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -1435,7 +1471,9 @@ def ModifyEntryBg():
         if cursor.rowcount > 0:
             cursor.close()
             return decodeStatus(0)
-@app.route('/getUserInfo',methods=['POST'])
+
+
+@app.route('/getUserInfo', methods=['POST'])
 def GetUserInfo():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -1450,7 +1488,7 @@ def GetUserInfo():
             userL = []
             for row in range(cursor.rowcount):
                 user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
-                                listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                            listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
                 userL.append(user)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1462,26 +1500,27 @@ def GetUserInfo():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/cancelAccount',methods=['POST'])
+
+@app.route('/cancelAccount', methods=['POST'])
 def CancelAccount():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        user_id=int(r.get(token))
-        sql = 'delete  from user where user_id=%d '% (user_id,)
+        user_id = int(r.get(token))
+        sql = 'delete  from user where user_id=%d ' % (user_id,)
         try:
             cursor.execute(sql)
-            if cursor.rowcount>0:
+            if cursor.rowcount > 0:
                 cursor.close()
-                return decodeStatus(0)  
-        except Exception as de: 
+                return decodeStatus(0)
+        except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
-            return decodeStatus(46)   
+            return decodeStatus(46)
     else:
         cursor.close()
         return decodeStatus(8)
 
-#if __name__ == '__main__':
-    #app.run(host='0.0.0.0',debug=True)
+# if __name__ == '__main__':
+    # app.run(host='0.0.0.0',debug=True)
