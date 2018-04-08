@@ -73,7 +73,9 @@ status = {0: 'successfully',
           41: 'delete comment of record failed',
           42:'no such comment comment id ',
           43:'recommend record failed',
-          44:'recommend activity failed'
+          44:'recommend activity failed',
+          45:'get user information failed',
+          46:'delete user failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -1433,6 +1435,53 @@ def ModifyEntryBg():
         if cursor.rowcount > 0:
             cursor.close()
             return decodeStatus(0)
+@app.route('/getUserInfo',methods=['POST'])
+def GetUserInfo():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    user_id = int(req['user_id'])
+    if r.exists(token):
+        sql = 'select user_id,role,telephone,image_src,name,sign,acc_point,account_name,reg_date from user where user_id=%d' % (
+            user_id,)
+        try:
+            cursor.execute(sql)
+            listUser = cursor.fetchall()
+            userL = []
+            for row in range(cursor.rowcount):
+                user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
+                                listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                userL.append(user)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(30)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
-#if __name__ == '__main__':
-#   app.run(host='0.0.0.0',debug=True)
+@app.route('/cancelAccount',methods=['POST'])
+def CancelAccount():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        user_id=int(r.get(token))
+        sql = 'delete  from user where user_id=%d '% (user_id,)
+        try:
+            cursor.execute(sql)
+            if cursor.rowcount>0:
+                cursor.close()
+                return decodeStatus(0)  
+        except Exception as de: 
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(46)   
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',debug=True)
