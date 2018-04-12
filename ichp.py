@@ -16,6 +16,7 @@ from user import User
 from comment import Comment
 import platform
 import logging
+import mysql
 
 app = Flask(__name__)
 app.logger.addHandler(logging.FileHandler('ichp.log'))
@@ -484,13 +485,12 @@ def AddRec():
         title = req['title']
         discribe = req['discribe']
         url = req['url']
-        type = req['type']
         addr = req['addr']  # 地址]
         labels_id_str = req['labels_id_str']
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%s","%s",%d,%d,"%s")' % (
-            recorder, title, discribe, url, type, addr, 0, 0, labels_id_str)
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%s","%s",%d,%d,"%s")' 
+        # mysql.insert(sql, [recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
         try:
-            cursor.execute(sql)
+            cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
             operator = int(r.get(token))
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 operator,)
@@ -528,6 +528,20 @@ def DelRec():
             cursor.execute(sql_temp)
             recorder = cursor.fetchall()
             if operator == recorder[0][0]:
+                sql1='select comm_rec_id from comm_rec where rec_id=%d'%(rec_id,)
+                cursor.execute(sql1)
+                comm_rec_id=cursor.fetchall()[0][0]
+                if(comm_rec_id!=None):
+                    sql2='select comm_comm_id from comm_rec where comm_rec_id=%d'%(comm_rec_id,)
+                    cursor.execute(sql2)
+                    comm_comm_id=cursor.fetchall()[0][0]
+                    if(comm_comm_id!=None):
+                        sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
+                        cursor.execute(sql3)
+                        cursor.commit()
+                        sql4='delete from comm_rec where rec_id=%d'%(rec_id)
+                        cursor.execute(sql4)
+                        cursor.commit()
                 sql = 'delete from record where rec_id=%d' % (rec_id,)
                 try:
                     cursor.execute(sql)
@@ -1134,7 +1148,7 @@ def GetCommRec():
             rec_id,)
         cursor.execute(sql_temp)
         commer = cursor.fetchall()[0][0]
-        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where rec_id=%d and user_id=%d' % (
+        sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
             rec_id, commer)
         try:
             cursor.execute(sql)
@@ -1170,11 +1184,18 @@ def DelCommRec():
         sql_temp = 'select commer from comm_rec where comm_rec_id=%d' % (
             comm_rec_id,)
         sql = 'delete from comm_rec where comm_rec_id=%d' % (comm_rec_id,)
+        sql1='select * from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
+        sql2= 'delete from comm_comm where comm_rec_id=%d' % (comm_rec_id,)
         try:
             cursor.execute(sql_temp)
             commer = cursor.fetchall()
             if cursor.rowcount > 0:
                 if operator == commer[0][0]:
+                    cursor.execute(sql1)
+                    cursor.fetchall()
+                    if(cursor.rowcount>0):
+                        cursor.execute(sql2)
+                        cursor.commit
                     try:
                         cursor.execute(sql)
                         conn.commit()
