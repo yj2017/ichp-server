@@ -533,17 +533,16 @@ def DelRec():
                 temp=cursor.fetchall()
                 if(cursor.rowcount>0):
                     comm_rec_id=temp[0][0]
-                    sql2='select comm_comm_id from comm_rec where comm_rec_id=%d'%(comm_rec_id,)
+                    sql2='select comm_comm_id from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
                     cursor.execute(sql2)
                     temp=cursor.fetchall()
                     if(cursor.rowcount>0):
-                        comm_comm_id=temp[0][0]
                         sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
                         cursor.execute(sql3)
-                        cursor.commit()
+                        conn.commit()
                         sql4='delete from comm_rec where rec_id=%d'%(rec_id)
                         cursor.execute(sql4)
-                        cursor.commit()
+                        conn.commit()
                 sql = 'delete from record where rec_id=%d' % (rec_id,)
                 try:
                     cursor.execute(sql)
@@ -1196,7 +1195,7 @@ def DelCommRec():
                     cursor.fetchall()
                     if(cursor.rowcount>0):
                         cursor.execute(sql2)
-                        cursor.commit
+                        cursor.commit()
                     try:
                         cursor.execute(sql)
                         conn.commit()
