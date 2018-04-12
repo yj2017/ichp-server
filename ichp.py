@@ -316,10 +316,9 @@ def AddEntry():
             cursor.close()
             return decodeStatus(14)
         else:
-            sql = 'insert into entry (name,content,editor,url) values ("%s","%s",%d,"%s")' % (
-                name, content, editor, url)
+            sql = 'insert into entry (name,content,editor,url) values (%s,%s,%s,%s)'
             try:
-                cursor.execute(sql)
+                cursor.execute(sql,[name, content, editor, url])
                 operator = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                     operator,)
@@ -487,10 +486,10 @@ def AddRec():
         url = req['url']
         addr = req['addr']  # 地址]
         labels_id_str = req['labels_id_str']
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%d","%s",%d,%d,"%s")' 
-        # mysql.insert(sql, [recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)' 
         try:
             cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
+
             operator = int(r.get(token))
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 operator,)
@@ -777,10 +776,9 @@ def IssueAct():
             hold_date = req['hold_date']
             hold_addr = req['hold_addr']
             act_src = req['act_src']
-            sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src) values (%d,"%s","%s","%s","%s","%s")' % (
-                publisher, title, content, hold_date, hold_addr, act_src)
+            sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src) values (%s,%s,%s,%s,%s,%s)'
             try:
-                cursor.execute(sql)
+                cursor.execute(sql,[publisher, title, content, hold_date, hold_addr, act_src])
                 operator = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                     operator,)
@@ -1543,5 +1541,5 @@ def CancelAccount():
         cursor.close()
         return decodeStatus(8)
 
-# if __name__ == '__main__':
-    # app.run(host='0.0.0.0',debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',debug=True)
