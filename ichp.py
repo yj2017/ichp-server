@@ -1130,7 +1130,7 @@ def GetCommRec():
     token = req['token']
     if r.exists(token):
         rec_id = int(req['rec_id'])
-        sql_temp = 'select commer from comm_comm where comm_rec_id=%d' % (
+        sql_temp = 'select commer from comm_rec where rec_id=%d' % (
             rec_id,)
         cursor.execute(sql_temp)
         commer = cursor.fetchall()[0][0]
