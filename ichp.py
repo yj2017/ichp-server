@@ -525,16 +525,19 @@ def DelRec():
             sql_temp = 'select recorder from record where rec_id=%d' % (
                 rec_id,)
             cursor.execute(sql_temp)
+            app.logger.debug(cursor.rowcount)
             recorder = cursor.fetchall()
             if operator == recorder[0][0]:
                 sql1='select comm_rec_id from comm_rec where rec_id=%d'%(rec_id,)
                 cursor.execute(sql1)
-                comm_rec_id=cursor.fetchall()[0][0]
-                if(comm_rec_id!=None):
+                temp=cursor.fetchall()
+                if(cursor.rowcount>0):
+                    comm_rec_id=temp[0][0]
                     sql2='select comm_comm_id from comm_rec where comm_rec_id=%d'%(comm_rec_id,)
                     cursor.execute(sql2)
-                    comm_comm_id=cursor.fetchall()[0][0]
-                    if(comm_comm_id!=None):
+                    temp=cursor.fetchall()
+                    if(cursor.rowcount>0):
+                        comm_comm_id=temp[0][0]
                         sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
                         cursor.execute(sql3)
                         cursor.commit()
