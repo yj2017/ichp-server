@@ -487,7 +487,7 @@ def AddRec():
         url = req['url']
         addr = req['addr']  # 地址]
         labels_id_str = req['labels_id_str']
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%s","%s",%d,%d,"%s")' 
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%d,"%s","%s","%s","%d","%s",%d,%d,"%s")' 
         # mysql.insert(sql, [recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
         try:
             cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
