@@ -1545,7 +1545,6 @@ def CancelAccount():
         cursor.close()
         return decodeStatus(8)
 
-
 @app.route('/bigMap',methods=["POST"])
 def BigMap():
     cursor=conn.cursor()
