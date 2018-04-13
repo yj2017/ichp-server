@@ -1608,16 +1608,23 @@ def recommendAll():
             cursor.execute(sql)
             listAct = cursor.fetchall()
             actL = []
-            recL=[]
             if cursor.rowcount > 0:
                 # 返回两条推荐
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
                                         [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
                     actL.append(activity)
+                    
+            cursor.execute(sql2)
+            listRec = cursor.fetchall()
+            recL=[]
+            if cursor.rowcount > 0:
+                # 返回两条推荐
+                for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                         [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
+                    
             if len(actL) > 2:
                 actL = actL[:2]
                 recL=recL[:2]
