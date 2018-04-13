@@ -182,7 +182,7 @@ def StoreInfo():
         return decodeStatus(8)
     else:
         sql = 'update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%d' % (
-            telephone, name, sign, user_id, image_src,user_id)
+            telephone, name, sign, , image_src,user_id)
         try:
             cursor.execute(sql)
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
