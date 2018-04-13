@@ -1163,7 +1163,7 @@ def GetCommRec():
             return decodeStatus(37)
         else:
             cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
     else:
         cursor.close()
         return decodeStatus(8)
