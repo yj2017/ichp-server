@@ -890,7 +890,7 @@ def GetAllAct():
             actL = []
             for row in range(cursor.rowcount):
                 activity = Activity(act[row][0], act[row][1],
-                                    act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7],act[row][8],act[row][8])
+                                    act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7],act[row][8],act[row][9])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -910,14 +910,13 @@ def GetUserAct():
     token = req['token']
     if r.exists(token):
         publisher = int(req['publisher'])
-        sql = 'select act_id,title,content,hold_date,hold_addr,act_src,issue_date ,image_src,labels_id_str from activity where publisher=%d' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date ,image_src,labels_id_str from activity where publisher=%d' % (
             publisher,)
         try:
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
-            activity = Activity(act[0][0], publisher,
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6],act[0][7],act[0][7])
+            activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6],act[0][7],act[0][8],act[0][9])
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1609,7 +1608,6 @@ def recommendAll():
             listAct = cursor.fetchall()
             actL = []
             if cursor.rowcount > 0:
-                # 返回两条推荐
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
                                         [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
@@ -1619,12 +1617,11 @@ def recommendAll():
             listRec = cursor.fetchall()
             recL=[]
             if cursor.rowcount > 0:
-                # 返回两条推荐
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                         [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
-                    
+
             if len(actL) > 2:
                 actL = actL[:2]
                 recL=recL[:2]
