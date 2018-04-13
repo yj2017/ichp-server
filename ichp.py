@@ -776,9 +776,10 @@ def IssueAct():
             hold_date = req['hold_date']
             hold_addr = req['hold_addr']
             act_src = req['act_src']
-            sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src) values (%s,%s,%s,%s,%s,%s)'
+            image_src=req['image_src']
+            sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src,image_src) values (%s,%s,%s,%s,%s,%s,%s)'
             try:
-                cursor.execute(sql,[publisher, title, content, hold_date, hold_addr, act_src])
+                cursor.execute(sql,[publisher, title, content, hold_date, hold_addr, act_src,image_src])
                 operator = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                     operator,)
@@ -850,7 +851,7 @@ def SearchAct():
     token = req['token']
     searchAct = req['searchAct']
     if r.exists(token):
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity  where title like "%s" ' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src from activity  where title like "%s" ' % (
             '%'+searchAct+'%',)
         try:
             cursor.execute(sql)
@@ -859,7 +860,7 @@ def SearchAct():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8])
                     actL.append(activity)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -882,14 +883,14 @@ def GetAllAct():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity'
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date ,image_src from activity'
         try:
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
             for row in range(cursor.rowcount):
                 activity = Activity(act[0][0], act[0][1],
-                                    act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
+                                    act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7],act[row][8])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -909,14 +910,14 @@ def GetUserAct():
     token = req['token']
     if r.exists(token):
         publisher = int(req['publisher'])
-        sql = 'select act_id,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher=%d' % (
+        sql = 'select act_id,title,content,hold_date,hold_addr,act_src,issue_date ,image_src from activity where publisher=%d' % (
             publisher,)
         try:
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
             activity = Activity(act[0][0], publisher,
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6])
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6],act[0][7])
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -936,14 +937,14 @@ def GetAct():
     token = req['token']
     if r.exists(token):
         act_id = int(req['act_id'])
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where act_id=%d' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src from activity where act_id=%d' % (
             act_id,)
         try:
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
             activity = Activity(act[0][0],
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7])
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8])
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1426,7 +1427,7 @@ def recommendAct():
     addr = req['addr']
     if r.exists(token):
         operator = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date from activity where publisher != %d order by issue_date desc' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src from activity where publisher != %d order by issue_date desc' % (
             operator,)
         try:
             cursor.execute(sql)
@@ -1437,20 +1438,20 @@ def recommendAct():
                 app.logger.debug(cursor.rowcount)
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8])
                     actL.append(activity)
             elif cursor.rowcount > 2:
                 for row in range(cursor.rowcount):
                     if listAct[row][5] == addr:  # 地点
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[0][8])
                 app.logger.debug(len(actL))
                 if len(actL) > 2:
                     actL = actL[:2]
                 else:
                     for row in range(2):
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8])
                         actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
