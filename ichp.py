@@ -526,26 +526,23 @@ def DelRec():
             sql_temp = 'select recorder from record where rec_id=%d' % (
                 rec_id,)
             cursor.execute(sql_temp)
-            app.logger.debug(cursor.rowcount)
             recorder = cursor.fetchall()
             if operator == recorder[0][0]:
                 sql1='select comm_rec_id from comm_rec where rec_id=%d'%(rec_id,)
-                cursor.execute(sql1)
-                temp=cursor.fetchall()
-                if cursor.rowcount>0:
-                    comm_rec_id=temp[0][0]
-                    sql2='select comm_comm_id from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
-                    cursor.execute(sql2)
+                try:
+                    cursor.execute(sql1)
                     temp=cursor.fetchall()
                     if cursor.rowcount>0:
-                        sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
-                        cursor.execute(sql3)
-                        conn.commit()
-                        sql4='delete from comm_rec where rec_id=%d'%(rec_id)
-                        cursor.execute(sql4)
-                        conn.commit()
-                sql = 'delete from record where rec_id=%d' % (rec_id,)
-                try:
+                        comm_rec_id=temp[0][0]
+                        sql2='select comm_comm_id from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
+                        cursor.execute(sql2)
+                        temp=cursor.fetchall()
+                        if cursor.rowcount>0:
+                            sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
+                            cursor.execute(sql3)
+                            sql4='delete from comm_rec where rec_id=%d'%(rec_id)
+                            cursor.execute(sql4)
+                    sql = 'delete from record where rec_id=%d' % (rec_id,)
                     cursor.execute(sql)
                     conn.commit()
                 except Exception as de:
@@ -1196,7 +1193,6 @@ def DelCommRec():
                     cursor.fetchall()
                     if cursor.rowcount>0:
                         cursor.execute(sql2)
-                        conn.commit()
                     try:
                         cursor.execute(sql)
                         conn.commit()
@@ -1530,8 +1526,18 @@ def CancelAccount():
     token = req['token']
     if r.exists(token):
         user_id = int(r.get(token))
+        sql1='delete from record where recorder=%d'%(user_id,)
+        sql2='delete from activity where publisher=%d'%(user_id,)
+        sql3='delete from entry where editor=%d'%(user_id,)
+        sql4='delete from comm_rec where commer=%d'%(user_id,)
+        sql5='delete from comm_comm where commer=%d'%(user_id,)
         sql = 'delete  from user where user_id=%d ' % (user_id,)
         try:
+            cursor.execute(sql1)
+            cursor.execute(sql2)
+            cursor.execute(sql3)
+            cursor.execute(sql4)
+            cursor.execute(sql5)
             cursor.execute(sql)
             conn.commit()
             if cursor.rowcount > 0:
