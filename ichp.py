@@ -1427,7 +1427,7 @@ def recommendAct():
     addr = req['addr']
     if r.exists(token):
         operator = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src from activity where publisher != %d order by issue_date desc' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d order by issue_date desc' % (
             operator,)
         try:
             cursor.execute(sql)
@@ -1438,20 +1438,20 @@ def recommendAct():
                 app.logger.debug(cursor.rowcount)
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
                     actL.append(activity)
             elif cursor.rowcount > 2:
                 for row in range(cursor.rowcount):
                     if listAct[row][5] == addr:  # 地点
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[0][8])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[0][8],listAct[0][9])
                 app.logger.debug(len(actL))
                 if len(actL) > 2:
                     actL = actL[:2]
                 else:
                     for row in range(2):
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8],listAct[0][9])
                         actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1593,7 +1593,44 @@ def SmallMap():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/recommendAll',methods=["POST"])
+def recommendAll():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        operator = int(r.get(token))
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d order by issue_date desc' % (
+            operator,)
+        sql2 = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc' % (
+            operator,)
+        try:
+            cursor.execute(sql)
+            listAct = cursor.fetchall()
+            actL = []
+            recL=[]
+            if cursor.rowcount > 0:
+                # 返回两条推荐
+                for row in range(cursor.rowcount):
+                    activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
+                    actL.append(activity)
+                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    recL.append(record)
+            if len(actL) > 2:
+                actL = actL[:2]
+                recL=recL[:2]
 
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "dataAct": actL,"dataRec":recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(44)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True)
