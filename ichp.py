@@ -78,7 +78,8 @@ status = {0: 'successfully',
           43: 'recommend record failed',
           44: 'recommend activity failed',
           45: 'get user information failed',
-          46: 'delete user failed'
+          46: 'delete user failed',
+          47:'get address failed in mysql'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -1532,6 +1533,7 @@ def CancelAccount():
         sql = 'delete  from user where user_id=%d ' % (user_id,)
         try:
             cursor.execute(sql)
+            conn.commit()
             if cursor.rowcount > 0:
                 cursor.close()
                 return decodeStatus(0)
@@ -1539,6 +1541,48 @@ def CancelAccount():
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(46)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+
+@app.route('/bigMap',methods=["POST"])
+def BigMap():
+    cursor=conn.cursor()
+    req=request.get_json(force=True)
+    token=req["token"]
+    if r.exists(token):
+        sql='select addr,rec_id from record'
+        try:
+            cursor.execute(sql)
+            addr_rec=cursor.fetchall()
+            cursor.close()
+            return json.dumps({"code":0,"msg":"sucessfully","data":addr_rec})
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(47)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+@app.route('/smallMap',methods=["POST"])
+def SmallMap():
+    cursor=conn.cursor()
+    req=request.get_json(force=True)
+    token=req["token"]
+    if r.exists(token):
+        user_id=int(r.get(token))
+        sql='select addr,rec_id from record where recorder=%d'%(user_id,)
+        try:
+            cursor.execute(sql)
+            addr_rec=cursor.fetchall()
+            cursor.close()
+            return json.dumps({"code":0,"msg":"sucessfully","data":addr_rec})
+        except Exception as e:
+            app.logger.debug(str(e))
+            cursor.close()
+            return decodeStatus(47) 
     else:
         cursor.close()
         return decodeStatus(8)
