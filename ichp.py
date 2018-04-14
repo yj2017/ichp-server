@@ -1164,13 +1164,13 @@ def GetCommRec():
                     commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
                                          commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                     commL.append(commentRec)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(37)
-        else:
-            cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            
     else:
         cursor.close()
         return decodeStatus(8)
