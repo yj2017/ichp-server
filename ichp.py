@@ -483,6 +483,7 @@ def AddRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
+    app.logger.debug(token)
     if r.exists(token):
         recorder = int(r.get(token))
         title = req['title']
@@ -491,9 +492,10 @@ def AddRec():
         addr = req['addr']  # 地址]
         labels_id_str = req['labels_id_str']
         sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)' 
+        app.logger.debug(sql)
         try:
             cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
-
+            app.logger.debug(sql)
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 recorder,)
             cursor.execute(sql)
