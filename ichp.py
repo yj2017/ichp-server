@@ -1160,7 +1160,7 @@ def GetCommRec():
             commList = cursor.fetchall()
             commL = []
             if cursor.rowcount > 0:
-                for row in range(len(commList)):
+                for row in range(cursor.rowcount):
                     commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
                                          commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                     commL.append(commentRec)
