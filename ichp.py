@@ -1386,7 +1386,7 @@ def recommendRec():
     addr = req['addr']
     if r.exists(token):
         operator = int(r.get(token))
-        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc' % (
+        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d ' % (
             operator,)
         try:
             cursor.execute(sql)
@@ -1433,7 +1433,7 @@ def recommendAct():
     addr = req['addr']
     if r.exists(token):
         operator = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d order by issue_date desc' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
             operator,)
         try:
             cursor.execute(sql)
@@ -1606,9 +1606,9 @@ def recommendAll():
     token = req['token']
     if r.exists(token):
         operator = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d order by issue_date desc' % (
+        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
             operator,)
-        sql2 = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d order by issue_date desc' % (
+        sql2 = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d' % (
             operator,)
         try:
             cursor.execute(sql)
