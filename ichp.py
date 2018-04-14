@@ -499,6 +499,7 @@ def AddRec():
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 recorder,)
             cursor.execute(sql)
+            app.logger.debug(cursor.rowcount)
             conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
