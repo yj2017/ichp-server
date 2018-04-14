@@ -1155,10 +1155,12 @@ def GetCommRec():
         commer = cursor.fetchall()[0][0]
         sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
             rec_id, commer)
+        app.logger.dubug(commer)
         try:
             cursor.execute(sql)
             commList = cursor.fetchall()
             commL = []
+            app.logger.dubug(cursor.rowcount)
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
