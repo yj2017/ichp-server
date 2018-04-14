@@ -509,7 +509,7 @@ def AddRec():
         else:
             cursor.close()
             app.logger.debug(labels_id_str)
-            return json.dumps({"msg": "successfully", "code": 0,"data":labels_id_str})
+            return json.dumps({"msg": "successfully", "code": 0,"data":"9"})
     else:
         cursor.close()
         return decodeStatus(8)
@@ -1392,26 +1392,27 @@ def recommendRec():
             cursor.execute(sql)
             listRec = cursor.fetchall()
             recL = []
-            if cursor.rowcount > 0 and cursor.rowcount <= 2:
+            app.logger.debug(cursor.rowcount)
+            if cursor.rowcount > 0 :
                 # 返回两条推荐记录
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
                     app.logger.debug(recL)
-            elif cursor.rowcount > 2:
-                for row in range(cursor.rowcount):
-                    if listRec[row][5] == addr:  # 地点
-                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                        recL.append(record)
-                if recL.count > 2:
-                    recL = recL[:2]
-                else:
-                    for row in range(2):
-                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                        recL.append(record)
+            # elif cursor.rowcount > 2:
+            #     for row in range(cursor.rowcount):
+            #         if listRec[row][5] == addr:  # 地点
+            #             record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+            #                             [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+            #             recL.append(record)
+            #     if recL.count > 2:
+            #         recL = recL[:2]
+            #     else:
+            #         for row in range(2):
+            #             record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
+            #                             [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+            #             recL.append(record)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
