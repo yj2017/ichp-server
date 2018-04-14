@@ -509,7 +509,7 @@ def AddRec():
         else:
             cursor.close()
             app.logger.debug(labels_id_str)
-            return json.dumps({"msg": "successfully", "code": 0,"data":"9"})
+            return json.dumps({"msg": "successfully", "code": 0,"data":labels_id_str})
     else:
         cursor.close()
         return decodeStatus(8)
