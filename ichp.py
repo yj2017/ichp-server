@@ -19,7 +19,11 @@ import logging
 import mysql
 
 app = Flask(__name__)
-app.logger.addHandler(logging.FileHandler('ichp.log'))
+handler=logging.FileHandler('ichp.log')
+logging_format = logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s :\n %(message)s')
+handler.setFormatter(logging_format)
+app.logger.addHandler(handler)
 app.debug = True
 
 
@@ -490,9 +494,8 @@ def AddRec():
         try:
             cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
 
-            operator = int(r.get(token))
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
-                operator,)
+                recorder,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
