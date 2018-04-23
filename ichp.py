@@ -17,9 +17,11 @@ from comment import Comment
 import platform
 import logging
 import mysql
+import math
+import operator
 
 app = Flask(__name__)
-handler=logging.FileHandler('ichp.log')
+handler = logging.FileHandler('ichp.log')
 logging_format = logging.Formatter(
     '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s :\n %(message)s')
 handler.setFormatter(logging_format)
@@ -83,7 +85,7 @@ status = {0: 'successfully',
           44: 'recommend activity failed',
           45: 'get user information failed',
           46: 'delete user failed',
-          47:'get address failed in mysql'
+          47: 'get address failed in mysql'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -186,7 +188,7 @@ def StoreInfo():
         return decodeStatus(8)
     else:
         sql = 'update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%d' % (
-            telephone, name, sign, image_src,user_id)
+            telephone, name, sign, image_src, user_id)
         try:
             cursor.execute(sql)
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
@@ -322,10 +324,10 @@ def AddEntry():
         else:
             sql = 'insert into entry (name,content,editor,url) values (%s,%s,%s,%s)'
             try:
-                cursor.execute(sql,[name, content, editor, url])
-                operator = int(r.get(token))
+                cursor.execute(sql, [name, content, editor, url])
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -356,9 +358,9 @@ def modifyEntry():
             content, editor, entry_id)
         try:
             cursor.execute(sql)
-            operator = int(r.get(token))
+            oper = int(r.get(token))
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
-                operator,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -423,9 +425,9 @@ def CollEntry():
                 collector, entry_id)
             try:
                 cursor.execute(sql)
-                operator = int(r.get(token))
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -491,10 +493,11 @@ def AddRec():
         url = req['url']
         addr = req['addr']  # 地址]
         labels_id_str = req['labels_id_str']
-        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)' 
+        sql = 'insert into record (recorder,title,discribe,url,type,addr,appr_num,comm_num,labels_id_str) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)'
         app.logger.debug(sql)
         try:
-            cursor.execute(sql,[recorder, title, discribe, url, 0, addr, 0, 0, labels_id_str])
+            cursor.execute(sql, [recorder, title, discribe,
+                                 url, 0, addr, 0, 0, labels_id_str])
             app.logger.debug(sql)
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 recorder,)
@@ -509,7 +512,7 @@ def AddRec():
         else:
             cursor.close()
             app.logger.debug(labels_id_str)
-            return json.dumps({"msg": "successfully", "code": 0,"data":labels_id_str})
+            return json.dumps({"msg": "successfully", "code": 0, "data": labels_id_str})
     else:
         cursor.close()
         return decodeStatus(8)
@@ -528,25 +531,29 @@ def DelRec():
         cursor.execute(sql_isExist)
         cursor.fetchall()
         if cursor.rowcount > 0:
-            operator = int(r.get(token))
+            oper = int(r.get(token))
             sql_temp = 'select recorder from record where rec_id=%d' % (
                 rec_id,)
             cursor.execute(sql_temp)
             recorder = cursor.fetchall()
-            if operator == recorder[0][0]:
-                sql1='select comm_rec_id from comm_rec where rec_id=%d'%(rec_id,)
+            if oper == recorder[0][0]:
+                sql1 = 'select comm_rec_id from comm_rec where rec_id=%d' % (
+                    rec_id,)
                 try:
                     cursor.execute(sql1)
-                    temp=cursor.fetchall()
-                    if cursor.rowcount>0:
-                        comm_rec_id=temp[0][0]
-                        sql2='select comm_comm_id from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
+                    temp = cursor.fetchall()
+                    if cursor.rowcount > 0:
+                        comm_rec_id = temp[0][0]
+                        sql2 = 'select comm_comm_id from comm_comm where comm_rec_id=%d' % (
+                            comm_rec_id,)
                         cursor.execute(sql2)
-                        temp=cursor.fetchall()
-                        if cursor.rowcount>0:
-                            sql3='delete from comm_comm where comm_rec_id=%d'%(comm_rec_id)
+                        temp = cursor.fetchall()
+                        if cursor.rowcount > 0:
+                            sql3 = 'delete from comm_comm where comm_rec_id=%d' % (
+                                comm_rec_id)
                             cursor.execute(sql3)
-                            sql4='delete from comm_rec where rec_id=%d'%(rec_id)
+                            sql4 = 'delete from comm_rec where rec_id=%d' % (
+                                rec_id)
                             cursor.execute(sql4)
                     sql = 'delete from record where rec_id=%d' % (rec_id,)
                     cursor.execute(sql)
@@ -579,11 +586,11 @@ def ModifyRecord():
     rec_id = int(req['rec_id'])
     token = req['token']
     if r.exists(token):
-        operator = int(r.get(token))
+        oper = int(r.get(token))
         sql_temp = 'select recorder from record where rec_id=%d' % (rec_id,)
         cursor.execute(sql_temp)
         recorder = cursor.fetchall()
-        if operator == recorder[0][0]:
+        if oper == recorder[0][0]:
             discribe = req['discribe']
             sql = 'update record set discribe="%s" where rec_id=%d' % (
                 discribe, rec_id)
@@ -743,9 +750,9 @@ def CollRec():
                 collector, rec_id)
             try:
                 cursor.execute(sql)
-                operator = int(r.get(token))
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -782,14 +789,15 @@ def IssueAct():
             hold_date = req['hold_date']
             hold_addr = req['hold_addr']
             act_src = req['act_src']
-            image_src=req['image_src']
-            labels_id_str=req['labels_id_str']
+            image_src = req['image_src']
+            labels_id_str = req['labels_id_str']
             sql = 'insert into activity (publisher,title,content,hold_date,hold_addr,act_src,image_src,labels_id_str) values (%s,%s,%s,%s,%s,%s,%s,%s)'
             try:
-                cursor.execute(sql,[publisher, title, content, hold_date, hold_addr, act_src,image_src,labels_id_str])
-                operator = int(r.get(token))
+                cursor.execute(sql, [publisher, title, content, hold_date,
+                                     hold_addr, act_src, image_src, labels_id_str])
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -821,12 +829,12 @@ def DelAct():
         cursor.execute(sql_isExist)
         cursor.fetchall()
         if cursor.rowcount > 0:
-            operator = int(r.get(token))
+            oper = int(r.get(token))
             sql_temp = 'select publisher from activity where act_id=%d' % (
                 act_id,)
             cursor.execute(sql_temp)
             publisher = cursor.fetchall()
-            if operator == publisher[0][0]:
+            if oper == publisher[0][0]:
                 sql = 'delete from activity where act_id=%d' % (act_id,)
                 try:
                     cursor.execute(sql)
@@ -867,7 +875,7 @@ def SearchAct():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
                     actL.append(activity)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -897,7 +905,7 @@ def GetAllAct():
             actL = []
             for row in range(cursor.rowcount):
                 activity = Activity(act[row][0], act[row][1],
-                                    act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7],act[row][8],act[row][9])
+                                    act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -923,7 +931,8 @@ def GetUserAct():
             cursor.execute(sql)
             act = cursor.fetchall()
             actL = []
-            activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6],act[0][7],act[0][8],act[0][9])
+            activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3],
+                                act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -981,9 +990,9 @@ def CollAct():
                 collector, act_id)
             try:
                 cursor.execute(sql)
-                operator = int(r.get(token))
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
             except Exception as de:
@@ -1086,9 +1095,9 @@ def ApprRec():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
-                operator = int(r.get(token))
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
                 cursor.close()
@@ -1122,9 +1131,9 @@ def CommRec():
         try:
             cursor.execute(sql)
             conn.commit()
-            operator = int(r.get(token))
+            oper = int(r.get(token))
             sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
-                operator,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -1154,20 +1163,20 @@ def GetCommRec():
         commL = []
         cursor.execute(sql_temp)
         cursor.fetchall()
-        if cursor.rowcount>0:
-            commer=cursor.fetchall()[0][0]
+        if cursor.rowcount > 0:
+            commer = cursor.fetchall()[0][0]
             sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
-            rec_id, commer)
+                rec_id, commer)
             app.logger.dubug(commer)
             try:
                 cursor.execute(sql)
                 commList = cursor.fetchall()
-                
+
                 app.logger.dubug(cursor.rowcount)
                 if cursor.rowcount > 0:
                     for row in range(cursor.rowcount):
                         commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
-                                         commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
+                                             commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                         commL.append(commentRec)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1176,7 +1185,7 @@ def GetCommRec():
                 cursor.close()
                 return decodeStatus(37)
         cursor.close()
-        return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)    
+        return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
     else:
         cursor.close()
         return decodeStatus(8)
@@ -1191,20 +1200,20 @@ def DelCommRec():
     token = req['token']
     comm_rec_id = int(req['comm_rec_id'])
     if r.exists(token):
-        operator = int(r.get(token))
+        oper = int(r.get(token))
         sql_temp = 'select commer from comm_rec where comm_rec_id=%d' % (
             comm_rec_id,)
         sql = 'delete from comm_rec where comm_rec_id=%d' % (comm_rec_id,)
-        sql1='select * from comm_comm where comm_rec_id=%d'%(comm_rec_id,)
-        sql2= 'delete from comm_comm where comm_rec_id=%d' % (comm_rec_id,)
+        sql1 = 'select * from comm_comm where comm_rec_id=%d' % (comm_rec_id,)
+        sql2 = 'delete from comm_comm where comm_rec_id=%d' % (comm_rec_id,)
         try:
             cursor.execute(sql_temp)
             commer = cursor.fetchall()
             if cursor.rowcount > 0:
-                if operator == commer[0][0]:
+                if oper == commer[0][0]:
                     cursor.execute(sql1)
                     cursor.fetchall()
-                    if cursor.rowcount>0:
+                    if cursor.rowcount > 0:
                         cursor.execute(sql2)
                     try:
                         cursor.execute(sql)
@@ -1247,9 +1256,9 @@ def ApprComm():
             cursor.execute(sql)
             if cursor.rowcount > 0:
                 conn.commit()
-                operator = int(r.get(token))
+                oper = int(r.get(token))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    operator,)
+                    oper,)
                 cursor.execute(sql)
                 conn.commit()
                 cursor.close()
@@ -1283,9 +1292,9 @@ def CommComm():
         try:
             cursor.execute(sql)
             conn.commit()
-            operator = int(r.get(token))
+            oper = int(r.get(token))
             sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
-                operator,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
         except Exception as de:
@@ -1310,7 +1319,7 @@ def DelCommComm():
     token = req['token']
     comm_comm_id = int(req['comm_comm_id'])
     if r.exists(token):
-        operator = int(r.get(token))
+        oper = int(r.get(token))
         sql_temp = 'select commer from comm_comm where comm_comm_id=%d' % (
             comm_comm_id,)
         sql = 'delete from comm_comm where comm_comm_id=%d' % (comm_comm_id,)
@@ -1318,7 +1327,7 @@ def DelCommComm():
             cursor.execute(sql_temp)
             commer = cursor.fetchall()
             if cursor.rowcount > 0:
-                if operator == commer[0][0]:
+                if oper == commer[0][0]:
                     try:
                         cursor.execute(sql)
                         conn.commit()
@@ -1382,6 +1391,7 @@ def GetCommComm():
         return decodeStatus(8)
 
 # recomend rec
+# apply tf-idf algriothm
 
 
 @app.route('/recommendRec', methods=["POST"])
@@ -1389,42 +1399,73 @@ def recommendRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    addr = req['addr']
     if r.exists(token):
-        operator = int(r.get(token))
-        sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d ' % (
-            operator,)
+        oper = int(r.get(token))
+        sql_user_lab = 'select labels_id_str from record where recorder=%d' % (
+            oper,)
+        sql_allUser_lab = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record '
         try:
-            cursor.execute(sql)
-            listRec = cursor.fetchall()
-            recL = []
-            app.logger.debug(cursor.rowcount)
-            if cursor.rowcount > 0 and cursor.rowcount <= 2:
-                # 返回两条推荐记录
-                for row in range(cursor.rowcount):
-                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                    recL.append(record)
-                    app.logger.debug(recL)
-            elif cursor.rowcount > 2:
-                for row in range(cursor.rowcount):
-                    if listRec[row][5] == addr:  # 地点
-                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                        recL.append(record)
-                if len(recL) > 2:
-                    recL = recL[:2]
-                else:
-                    for row in range(2):
-                        record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                        recL.append(record)
+            cursor.execute(sql_user_lab)
+            user_labs = cursor.fetchall()
+            totalRow = cursor.rowcount()
+            labs_list = []
+            # get the tj
+            for i in range(totalRow):
+                small_list = user_labs[i][0].split(',')
+                colunmNum = len(small_list)
+                for j in range(colunmNum):
+                    labs_list.append(small_list[j])
+            eachWeightDic = {}  # dictionary [item:weight]
+            totalNum = len(labs_list)
+            # for item in labs_list:
+            #     eachWeightDic[item]=labs_list.count(item)/totalNum
+            #     app.logger.debug(eachWeightDic[item])
+            # get the log(D/Dj)
+            cursor.execute(sql_allUser_lab)
+            allUser_record = cursor.fetchall()
+            allRow = cursor.rowcount()
+            all_list = []
+            for i in range(allRow):
+                little_list = allUser_record[i][10].split(',')
+                colunmNum = len(small_list)
+                for j in range(colunmNum):
+                    all_list.append(little_list)
+            # tf-idf
+            allNum = len(all_list)
+            Dn = 0
+            for item in labs_list:
+                Dn = all_list.count(item)
+                if Dn>0:
+                    eachWeightDic[item] = (labs_list.count(
+                        item)/totalNum)*math.log(allNum/Dn)
+                    app.logger.debug(eachWeightDic[item])
+            for rec_id in allUser_record[:][0]:
+                w = {rec_id: 0}
+                little_list = allUser_record[i][10].split(',')
+                l_len = len(little_list)
+                for item in little_list:
+                    if item in labs_list:
+                        w[rec_id] = w[rec_id]+eachWeightDic[item]/l_len
+            sorted(w.items(), key=operator.itemgetter(1))
+            recordL = []
+            keys = w.keys()
+            for cnt in len(keys):
+                for k in range(allRow):
+                    if len(recordL)<3:
+                        if allUser_record[k][0] == keys[cnt] :
+                            rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
+                                     allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
+                            recordL.append(rec)
+                    else:
+                        cursor.close()
+                        return json.dumps({"code": 0,"msg":"successfully","data": recordL})           
             cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code": 0, "data": recordL})
         except Exception as de:
-            app.logger.debug(str(de))
+            app.logger.debug(de)
             cursor.close()
-            return decodeStatus(43)
+            return decodeStatus(49)
+
     else:
         cursor.close()
         return decodeStatus(8)
@@ -1439,9 +1480,9 @@ def recommendAct():
     token = req['token']
     addr = req['addr']
     if r.exists(token):
-        operator = int(r.get(token))
+        oper = int(r.get(token))
         sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
-            operator,)
+            oper,)
         try:
             cursor.execute(sql)
             listAct = cursor.fetchall()
@@ -1451,20 +1492,20 @@ def recommendAct():
                 app.logger.debug(cursor.rowcount)
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
                     actL.append(activity)
             elif cursor.rowcount > 2:
                 for row in range(cursor.rowcount):
                     if listAct[row][5] == addr:  # 地点
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[0][8],listAct[0][9])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[0][8], listAct[0][9])
                 app.logger.debug(len(actL))
                 if len(actL) > 2:
                     actL = actL[:2]
                 else:
                     for row in range(2):
                         activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8],listAct[0][9])
+                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[0][9])
                         actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1540,11 +1581,11 @@ def CancelAccount():
     token = req['token']
     if r.exists(token):
         user_id = int(r.get(token))
-        sql1='delete from record where recorder=%d'%(user_id,)
-        sql2='delete from activity where publisher=%d'%(user_id,)
-        sql3='delete from entry where editor=%d'%(user_id,)
-        sql4='delete from comm_rec where commer=%d'%(user_id,)
-        sql5='delete from comm_comm where commer=%d'%(user_id,)
+        sql1 = 'delete from record where recorder=%d' % (user_id,)
+        sql2 = 'delete from activity where publisher=%d' % (user_id,)
+        sql3 = 'delete from entry where editor=%d' % (user_id,)
+        sql4 = 'delete from comm_rec where commer=%d' % (user_id,)
+        sql5 = 'delete from comm_comm where commer=%d' % (user_id,)
         sql = 'delete  from user where user_id=%d ' % (user_id,)
         try:
             cursor.execute(sql1)
@@ -1565,18 +1606,19 @@ def CancelAccount():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/bigMap',methods=["POST"])
+
+@app.route('/bigMap', methods=["POST"])
 def BigMap():
-    cursor=conn.cursor()
-    req=request.get_json(force=True)
-    token=req["token"]
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req["token"]
     if r.exists(token):
-        sql='select addr,rec_id from record'
+        sql = 'select addr,rec_id from record'
         try:
             cursor.execute(sql)
-            addr_rec=cursor.fetchall()
+            addr_rec = cursor.fetchall()
             cursor.close()
-            return json.dumps({"code":0,"msg":"sucessfully","data":addr_rec})
+            return json.dumps({"code": 0, "msg": "sucessfully", "data": addr_rec})
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
@@ -1585,38 +1627,40 @@ def BigMap():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/smallMap',methods=["POST"])
+
+@app.route('/smallMap', methods=["POST"])
 def SmallMap():
-    cursor=conn.cursor()
-    req=request.get_json(force=True)
-    token=req["token"]
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req["token"]
     if r.exists(token):
-        user_id=int(r.get(token))
-        sql='select addr,rec_id from record where recorder=%d'%(user_id,)
+        user_id = int(r.get(token))
+        sql = 'select addr,rec_id from record where recorder=%d' % (user_id,)
         try:
             cursor.execute(sql)
-            addr_rec=cursor.fetchall()
+            addr_rec = cursor.fetchall()
             cursor.close()
-            return json.dumps({"code":0,"msg":"sucessfully","data":addr_rec})
+            return json.dumps({"code": 0, "msg": "sucessfully", "data": addr_rec})
         except Exception as e:
             app.logger.debug(str(e))
             cursor.close()
-            return decodeStatus(47) 
+            return decodeStatus(47)
     else:
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/recommendAll',methods=["POST"])
+
+@app.route('/recommendAll', methods=["POST"])
 def recommendAll():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        operator = int(r.get(token))
+        oper = int(r.get(token))
         sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
-            operator,)
+            oper,)
         sql2 = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d' % (
-            operator,)
+            oper,)
         try:
             cursor.execute(sql)
             listAct = cursor.fetchall()
@@ -1624,24 +1668,24 @@ def recommendAll():
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7],listAct[row][8],listAct[row][9])
+                                        [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
                     actL.append(activity)
-                    
+
             cursor.execute(sql2)
             listRec = cursor.fetchall()
-            recL=[]
+            recL = []
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                        [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
                     recL.append(record)
 
             if len(actL) > 2:
                 actL = actL[:2]
-                recL=recL[:2]
+                recL = recL[:2]
 
             cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "dataAct": actL,"dataRec":recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"msg": "successfully", "code": 0, "dataAct": actL, "dataRec": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
@@ -1650,5 +1694,6 @@ def recommendAll():
         cursor.close()
         return decodeStatus(8)
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True)
+    app.run(host='0.0.0.0', debug=True)
