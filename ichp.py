@@ -93,7 +93,7 @@ pool = redis.ConnectionPool(
 r = redis.Redis(connection_pool=pool)
 # mysql
 conn = mysql.connector.connect(
-    user='root', password='273841', database='ichp')
+    user='ichp', password='273841', database='ichp')
 
 
 def decodeStatus(code):
@@ -1509,29 +1509,30 @@ def recommendRec():
         try:
             cursor.execute(sql_user_lab)
             user_labs = cursor.fetchall()
-            totalRow = cursor.rowcount()
+            totalRow = cursor.rowcount
             labs_list = []
+            small_list=[]
             # get the tj
             for i in range(totalRow):
                 small_list = user_labs[i][0].split(',')
+                app.logger.debug(totalRow)
                 colunmNum = len(small_list)
+                app.logger.debug(colunmNum)
                 for j in range(colunmNum):
                     labs_list.append(small_list[j])
             eachWeightDic = {}  # dictionary [item:weight]
             totalNum = len(labs_list)
-            # for item in labs_list:
-            #     eachWeightDic[item]=labs_list.count(item)/totalNum
-            #     app.logger.debug(eachWeightDic[item])
-            # get the log(D/Dj)
+            app.logger.debug(totalNum)
             cursor.execute(sql_allUser_lab)
             allUser_record = cursor.fetchall()
-            allRow = cursor.rowcount()
+            allRow = cursor.rowcount
             all_list = []
             for i in range(allRow):
                 little_list = allUser_record[i][10].split(',')
                 colunmNum = len(small_list)
                 for j in range(colunmNum):
                     all_list.append(little_list)
+                    app.logger.debug(little_list)
             # tf-idf
             allNum = len(all_list)
             Dn = 0
@@ -1550,10 +1551,11 @@ def recommendRec():
                         w[rec_id] = w[rec_id]+eachWeightDic[item]/l_len
             sorted(w.items(), key=operator.itemgetter(1))
             recordL = []
-            keys = w.keys()
-            for cnt in len(keys):
+            keys =list(w.keys())   
+            for cnt in range(len(keys)):        
                 for k in range(allRow):
                     if len(recordL) < 3:
+                        app.logger.debug(keys)
                         if allUser_record[k][0] == keys[cnt]:
                             rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
                                          allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
@@ -1566,7 +1568,7 @@ def recommendRec():
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
-            return decodeStatus(49)
+            return decodeStatus(43)
 
     else:
         cursor.close()
