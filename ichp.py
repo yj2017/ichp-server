@@ -93,7 +93,7 @@ pool = redis.ConnectionPool(
 r = redis.Redis(connection_pool=pool)
 # mysql
 conn = mysql.connector.connect(
-    user='ichp', password='273841', database='ichp')
+    user='root', password='273841', database='ichp')
 
 
 def decodeStatus(code):
@@ -148,17 +148,21 @@ def Login():
     #req = request.get_json(force=True)
     req = request.get_json(force=True)
     username = req['username']
-    psw = req['psw']
-    if username == '' or psw == '':
+    psw = str(req['psw'])
+    if username == None or psw == None:
         cursor.close()
         return decodeStatus(2)
     else:
         cursor.execute(
             'select psw,user_id from user where account_name="%s"' % (username,))
         psw_id = cursor.fetchall()
-        if cursor.rowcount == 1:
+        if cursor.rowcount >= 1:
+            app.logger.debug(psw_id[0][0]+"*")
+            app.logger.debug(psw+"*")
             if psw == psw_id[0][0]:
+                app.logger.debug(psw)
                 the_uuid = uuid.uuid1()  # the key
+                app.logger.debug(the_uuid)
                 user_id = psw_id[0][1]  # the value
                 # key-value is stored by redis,3600s后过期
                 r.set(the_uuid, user_id, ex=3600*24)
@@ -445,6 +449,41 @@ def CollEntry():
         cursor.close()
         return decodeStatus(8)
 
+
+@app.route('/getCollEntry', methods=["POST"])
+def getCollEntry():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        sql = 'select entry_id from coll_entry '
+        try:
+            cursor.execute(sql)
+            entry_ids = cursor.fetchall()
+            entryL = []
+            rowCount = cursor.rowcount
+            if rowCount > 0:
+                for i in range(rowCount):
+                    sql_temp = 'select entry_id,name,content,editor,url from entry where entry_id=%d' % (
+                        entry_ids[i][0])
+                    cursor.execute(sql_temp)
+                    entry = cursor.fetchall()
+                    entry_temp = Entry(entry[0][0], entry[0][1],
+                                       entry[0][2], entry[0][3], entry[0][4])
+                    entryL.append(entry_temp)
+                cursor.close()
+                return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            else:
+                cursor.close()
+                return decodeStatus(26)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
 # get  an entry content
 
 
@@ -477,6 +516,7 @@ def GetEntry():
     else:
         cursor.close()
         return decodeStatus(8)
+
 
 
 # issue record
@@ -575,6 +615,8 @@ def DelRec():
     else:
         cursor.close()
         return decodeStatus(8)
+
+
 
 # modify record
 
@@ -702,6 +744,36 @@ def GetRec():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/getCollRec',methods=["POST"])
+def getCollRec():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        sql = 'select rec_id  from coll_record'
+        try:
+            cursor.execute(sql)
+            rec_ids = cursor.fetchall()
+            recL = []
+            rowCount=cursor.rowcount
+            if rowCount > 0:
+                for row in range(rowCount):
+                    sql_temp='select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%d'%(rec_ids[row][0],)
+                    cursor.execute(sql_temp)
+                    listRec=cursor.fetchall()
+                    record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 @app.route('/searchRec', methods=["POST"])
 def SearchRec():
@@ -972,7 +1044,37 @@ def GetAct():
         return decodeStatus(8)
 # collect activity
 
-
+@app.route('/getCollAct',methods=["POST"])
+def getCollAct():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        sql = 'select act_id from coll_activity '
+        try:
+            cursor.execute(sql)
+            act_ids = cursor.fetchall()
+            actL = []
+            rowCount=cursor.rowcount
+            if rowCount>0:
+                for i in range(rowCount):
+                    sql_temp='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%d' % (
+                    act_ids[i][0],)
+                    cursor.execute(sql_temp)
+                    act=cursor.fechall()
+                    activity = Activity(act[0][0],
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                    actL.append(activity)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(28)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+        
 @app.route('/collAct', methods=["POST"])
 def CollAct():
     cursor = conn.cursor()
@@ -1435,7 +1537,7 @@ def recommendRec():
             Dn = 0
             for item in labs_list:
                 Dn = all_list.count(item)
-                if Dn>0:
+                if Dn > 0:
                     eachWeightDic[item] = (labs_list.count(
                         item)/totalNum)*math.log(allNum/Dn)
                     app.logger.debug(eachWeightDic[item])
@@ -1451,14 +1553,14 @@ def recommendRec():
             keys = w.keys()
             for cnt in len(keys):
                 for k in range(allRow):
-                    if len(recordL)<3:
-                        if allUser_record[k][0] == keys[cnt] :
+                    if len(recordL) < 3:
+                        if allUser_record[k][0] == keys[cnt]:
                             rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
-                                     allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
+                                         allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
                             recordL.append(rec)
                     else:
                         cursor.close()
-                        return json.dumps({"code": 0,"msg":"successfully","data": recordL})           
+                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL})
             cursor.close()
             return json.dumps({"code": 0, "data": recordL})
         except Exception as de:
