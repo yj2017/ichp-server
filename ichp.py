@@ -1435,21 +1435,15 @@ def GetCommRec():
     if r.exists(token):
         oper=str(r.get(token))
         rec_id = int(req['rec_id'])
-        sql_temp = 'select commer from comm_rec where rec_id=%d' % (
-            rec_id,)
         commL = []
-        cursor.execute(sql_temp)
-        cursor.fetchall()
+        cursor.execute('select commer from comm_rec where rec_id= %s', ( rec_id,))
+        commer=cursor.fetchall()
         if cursor.rowcount > 0:
-            commer = cursor.fetchall()[0][0]
             sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
-                rec_id, commer)
-            
-            app.logger.dubug(commer)
+                rec_id, commer[0][0])
             try:
                 cursor.execute(sql)
                 commList = cursor.fetchall()
-                app.logger.dubug(cursor.rowcount)
                 if cursor.rowcount > 0:
                     for row in range(cursor.rowcount):
                         commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
@@ -1462,7 +1456,6 @@ def GetCommRec():
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
             except Exception as de:
-                app.logger.debug(str(de))
                 cursor.close()
                 return decodeStatus(37)
         cursor.close()
@@ -2053,4 +2046,4 @@ def getEntryAct():
         return decodeStatus(8)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0',debug=True)
