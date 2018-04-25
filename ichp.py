@@ -1552,7 +1552,7 @@ def removeApprCommRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        comm_rec_id_str=str(req['Comm_rec_id'])
+        comm_rec_id_str=str(req['comm_rec_id'])
         oper_str=str(r.get(token))
         r.srem("comm_rec"+comm_rec_id_str,oper_str)
         return decodeStatus(0)
