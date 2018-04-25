@@ -698,6 +698,7 @@ def GetAllRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
+        oper=str(r.get(token))
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record'
         try:
             cursor.execute(sql)
@@ -708,6 +709,10 @@ def GetAllRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    if r.sismember("rec"+str(record.rec_id),oper):
+                        record.isApprove=True
+                    else:
+                        record.isApprove=False
                     recL.append(record)
             cursor.close()
             app.logger.debug(str(recL))
@@ -759,6 +764,7 @@ def GetRec():
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
+        oper=str(r.get(token))
         sql = 'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where rec_id=%d' % rec_id
         try:
             cursor.execute(sql)
@@ -768,6 +774,10 @@ def GetRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    if r.sismember("rec"+str(rec_id),oper):
+                        record.isApprove=True
+                    else:
+                        record.isApprove=False
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -1423,6 +1433,7 @@ def GetCommRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
+        oper=str(r.get(token))
         rec_id = int(req['rec_id'])
         sql_temp = 'select commer from comm_rec where rec_id=%d' % (
             rec_id,)
@@ -1433,16 +1444,20 @@ def GetCommRec():
             commer = cursor.fetchall()[0][0]
             sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
                 rec_id, commer)
+            
             app.logger.dubug(commer)
             try:
                 cursor.execute(sql)
                 commList = cursor.fetchall()
-
                 app.logger.dubug(cursor.rowcount)
                 if cursor.rowcount > 0:
                     for row in range(cursor.rowcount):
                         commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
                                              commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
+                        if r.sismember("comm_rec"+str(commentRec.comm_rec_id),oper):
+                            commentRec.isApprove=True
+                        else:
+                            commentRec.isApprove=False
                         commL.append(commentRec)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1796,7 +1811,7 @@ def recommendAct():
             allRow = cursor.rowcount
             all_list = []
             for i in range(allRow):
-                little_list = allUser_act[i][10].split(',')
+                little_list = allUser_act[i][9].split(',')
                 colunmNum = len(small_list)
                 for j in range(colunmNum):
                     all_list.append(little_list)
@@ -1819,7 +1834,7 @@ def recommendAct():
                 rec_id=rec_id_array[0]
                 # w = {rec_id: 0}
                 w[rec_id] =0 
-                little_list = allUser_act[index][10].split(',')
+                little_list = allUser_act[index][9].split(',')
                 index=index+1
                 l_len = len(little_list)
                 for item in little_list:
@@ -1844,7 +1859,7 @@ def recommendAct():
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
-            return decodeStatus(43)
+            return decodeStatus(44)
 
     else:
         cursor.close()
@@ -1983,9 +1998,59 @@ def SmallMap():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/getEntryRec',methods=["POST"])
+def getEntryRec():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    entry_id = str(req['entry_id'])
+    if r.exists(token):
+        try:
+            cursor.execute('select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where labels_id_str like %s' ,('%'+str(entry_id)+'%',))
+            listRec = cursor.fetchall()
+            recL = []
+            if cursor.rowcount > 0:
+                for row in range(cursor.rowcount):
+                    record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
+                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    recL.append(record)
+                    app.logger.debug(recL)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(16)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
-
-
+@app.route('/getEntryAct',methods=["POST"])
+def getEntryAct():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    entry_id = str(req['entry_id'])
+    if r.exists(token):
+        try:
+            cursor.execute('select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where labels_id_str like %s' ,('%'+str(entry_id)+'%',))
+            act = cursor.fetchall()
+            actL = []
+            if cursor.rowcount > 0:
+                for row in range(cursor.rowcount):
+                    activity = Activity(act[0][0],
+                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                    actL.append(activity)
+                    app.logger.debug(actL)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(28)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
