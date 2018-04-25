@@ -85,7 +85,8 @@ status = {0: 'successfully',
           44: 'recommend activity failed',
           45: 'get user information failed',
           46: 'delete user failed',
-          47: 'get address failed in mysql'
+          47: 'get address failed in mysql',
+          48:'concern failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -484,6 +485,44 @@ def getCollEntry():
         cursor.close()
         return decodeStatus(8)
 
+
+@app.route('/delCollEntry', methods=["POST"])
+def delCollEntry():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    entry_id = int(req['entry_id'])
+    if r.exists(token):
+        sql_isExist = 'select * from coll_entry where entry_id=%d' % (entry_id,)
+        cursor.execute(sql_isExist)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            oper = int(r.get(token))
+            sql_temp = 'select collector from coll_entry where entry_id=%d' % (
+                entry_id,)
+            cursor.execute(sql_temp)
+            recorder = cursor.fetchall()
+            if oper == recorder[0][0]:
+                sql = 'delete from coll_entry where entry_id=%d' % (entry_id,)
+                try:
+                    cursor.execute(sql)
+                    conn.commit()
+                    cursor.close()
+                    return decodeStatus(0)
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(27)
+            else:
+                cursor.close()
+                return decodeStatus(15)  # 不是发布者删除record
+        else:
+            cursor.close()
+            return decodeStatus(26)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 # get  an entry content
 
 
@@ -774,6 +813,46 @@ def getCollRec():
     else:
         cursor.close()
         return decodeStatus(8)
+
+
+@app.route('/delCollRec', methods=["POST"])
+def DelCollRec():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    rec_id = int(req['rec_id'])
+    if r.exists(token):
+        sql_isExist = 'select * from coll_record where rec_id=%d' % (rec_id,)
+        cursor.execute(sql_isExist)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            oper = int(r.get(token))
+            sql_temp = 'select collector from coll_record where rec_id=%d' % (
+                rec_id,)
+            cursor.execute(sql_temp)
+            recorder = cursor.fetchall()
+            if oper == recorder[0][0]:
+                sql = 'delete from coll_record where rec_id=%d' % (rec_id,)
+                try:
+                    cursor.execute(sql)
+                    conn.commit()
+                    cursor.close()
+                    return decodeStatus(0)
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(27)
+            else:
+                cursor.close()
+                return decodeStatus(15)  # 不是发布者删除record
+        else:
+            cursor.close()
+            return decodeStatus(24)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
 
 @app.route('/searchRec', methods=["POST"])
 def SearchRec():
@@ -1112,6 +1191,44 @@ def CollAct():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/delCollAct',methods=["POST"])
+def delCollAct():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    act_id = int(req['act_id'])
+    if r.exists(token):
+        sql_isExist = 'select * from coll_activity where act_id=%d' % (act_id,)
+        cursor.execute(sql_isExist)
+        cursor.fetchall()
+        if cursor.rowcount > 0:
+            oper = int(r.get(token))
+            sql_temp = 'select collector from coll_activity where act_id=%d' % (
+                act_id,)
+            cursor.execute(sql_temp)
+            publisher = cursor.fetchall()
+            if oper == publisher[0][0]:
+                sql = 'delete from coll_activity where act_id=%d' % (act_id,)
+                try:
+                    cursor.execute(sql)
+                    conn.commit()
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(27)
+                else:
+                    cursor.close()
+                    return decodeStatus(0)
+            else:
+                cursor.close()
+                return decodeStatus(15)  # 不是发布者删除
+        else:
+            cursor.close()
+            return decodeStatus(22)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 # search user information
 @app.route('/searchUserInfo', methods=["POST"])
@@ -1181,6 +1298,61 @@ def GetMyConc():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/getConcMe',methods=["POST"])
+def getConcMe():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        be_paid_id = int(r.get(token))  # myself
+        sql_temp = 'select pay_id from attention_info where be_paid_id=%d' % (
+            be_paid_id,)
+        try:
+            cursor.execute(sql_temp)
+            uidL = cursor.fetchall()
+            userL = []  # 没有关注任何用户
+            if cursor.rowcount > 0:
+                for row in range(cursor.rowcount):
+                    sql = 'select user_id,role,telephone,image_src,name,sign,acc_point,account_name,reg_date from user where user_id=%d' % (
+                        uidL[row][0])
+                    try:
+                        cursor.execute(sql)
+                        listUser = cursor.fetchall()
+                        user = User(listUser[0][0], listUser[0][1], listUser[0][2], listUser[0][3],
+                                    listUser[0][4], listUser[0][5], listUser[0][6], listUser[0][7], listUser[0][8])
+                        userL.append(user)
+                    except Exception as e:
+                        app.logger.debug(str(e))
+                        cursor.close()
+                        return decodeStatus(32)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            app.logger.debug(str(de))
+            cursor.close()
+            return decodeStatus(32)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+@app.route('/concerUser',methods=["POST"])
+def concerUser():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    user_id=int(req['user_id'])
+    if r.exists(token):
+        pay_id = int(r.get(token))
+        sql='insert into attention_info(pay_id,be_paid_id) values(%d,%d)'%(pay_id,user_id)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            return decodeStatus(0)
+        except:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(48)
 # approve record 点赞
 
 
@@ -1799,5 +1971,7 @@ def recommendAll():
         return decodeStatus(8)
 
 
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0',debug=True)
