@@ -1355,30 +1355,25 @@ def concerUser():
 
 @app.route('/apprRec', methods=["POST"])
 def ApprRec():
-    cursor = conn.cursor()
+    cursor=conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        rec_id = int(req['rec_id'])
-        sql = 'update record set appr_num=appr_num+1 where rec_id=%d' % (
-            rec_id,)
+        rec_id_str=str(req['rec_id'])
+        rec_id = int(rec_id_str)
+        oper_str=str(r.get(token))
+        oper=int(oper_str)  
+        r.sadd("rec"+rec_id_str,oper_str)
         try:
-            cursor.execute(sql)
-            if cursor.rowcount > 0:
-                conn.commit()
-                oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
                     oper,)
-                cursor.execute(sql)
-                conn.commit()
-                cursor.close()
-                return decodeStatus(0)
-            else:
-                conn.rollback()
-                cursor.close()
-                return decodeStatus(33)
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            return json.dumps({"msg":"successfully","code":0,"data":r.scard("rec"+rec_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
+            conn.rollback()
             cursor.close()
             return decodeStatus(33)
     else:
@@ -1519,27 +1514,21 @@ def ApprComm():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    comm_rec_id = int(req['comm_rec_id'])
+    comm_rec_id_str=str(req['comm_rec_id'])
     if r.exists(token):
-        sql = 'update comm_rec set appr_num=appr_num+1 where comm_rec_id=%d' % (
-            comm_rec_id,)
         try:
-            cursor.execute(sql)
-            if cursor.rowcount > 0:
-                conn.commit()
-                oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            oper_str=str(r.get(token))
+            oper = int(oper_str)
+            r.sadd("comm_rec"+comm_rec_id_str,oper_str)
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
                     oper,)
-                cursor.execute(sql)
-                conn.commit()
-                cursor.close()
-                return decodeStatus(0)
-            else:
-                conn.rollback()
-                cursor.close()
-                return decodeStatus(35)
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            return json.dumps({"msg":"successfully","code":0,"data":r.scard("comm_rec"+comm_rec_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
+            conn.rollback()
             cursor.close()
             return decodeStatus(35)
     else:
