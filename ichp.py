@@ -29,7 +29,6 @@ app.logger.addHandler(handler)
 app.debug = True
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
 
-
 def getUploadDir():
     if platform.system() == 'Windows':
         return 'D:/uploads/'
@@ -1673,12 +1672,13 @@ def recommendRec():
     token = req['token']
     if r.exists(token):
         oper = int(r.get(token))
-        sql_user_lab = 'select labels_id_str from record where recorder=%d' % (
-            oper,)
-        sql_allUser_lab = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record '
+        # sql_user_lab = 'select labels_id_str from record where recorder=%d' % (
+        #     oper,)
+        # sql_allUser_lab = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record '
         try:
-            cursor.execute(sql_user_lab)
-            user_labs = cursor.fetchall()
+            cursor.execute('select labels_id_str from record where recorder=%s',(oper,))
+            # cursor.execute(sql_user_lab)
+            user_labs =cursor.fetchall()
             totalRow = cursor.rowcount
             labs_list = []
             small_list=[]
@@ -1690,10 +1690,10 @@ def recommendRec():
                 app.logger.debug(colunmNum)
                 for j in range(colunmNum):
                     labs_list.append(small_list[j])
-            eachWeightDic = {}  # dictionary [item:weight]
+             # dictionary [item:weight]
             totalNum = len(labs_list)
             app.logger.debug(totalNum)
-            cursor.execute(sql_allUser_lab)
+            cursor.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record ')
             allUser_record = cursor.fetchall()
             allRow = cursor.rowcount
             all_list = []
@@ -1706,15 +1706,23 @@ def recommendRec():
             # tf-idf
             allNum = len(all_list)
             Dn = 0
+            eachWeightDic={}
             for item in labs_list:
-                Dn = all_list.count(item)
-                if Dn > 0:
-                    eachWeightDic[item] = (labs_list.count(
-                        item)/totalNum)*math.log(allNum/Dn)
-                    app.logger.debug(eachWeightDic[item])
-            for rec_id in allUser_record[:][0]:
-                w = {rec_id: 0}
-                little_list = allUser_record[i][10].split(',')
+                if item not in eachWeightDic:
+                    Dn = all_list.count(item)
+                    if Dn>0:
+                        eachWeightDic[item] = (labs_list.count(
+                        item)/totalNum)*math.log(allNum/Dn+1)
+                    else:
+                         eachWeightDic[item]=0
+            index=0
+            w ={}
+            for rec_id_array in allUser_record:
+                rec_id=rec_id_array[0]
+                # w = {rec_id: 0}
+                w[rec_id] =0 
+                little_list = allUser_record[index][10].split(',')
+                index=index+1
                 l_len = len(little_list)
                 for item in little_list:
                     if item in labs_list:
@@ -1732,9 +1740,9 @@ def recommendRec():
                             recordL.append(rec)
                     else:
                         cursor.close()
-                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL})
+                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
             cursor.close()
-            return json.dumps({"code": 0, "data": recordL})
+            return json.dumps({"code": 0,"msg":"sucessfully" ,"data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
@@ -1972,4 +1980,4 @@ def recommendAll():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True)
+    app.run(host='0.0.0.0')
