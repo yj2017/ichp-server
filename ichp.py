@@ -1035,8 +1035,8 @@ def SearchAct():
                     activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
                                         [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
                     actL.append(activity)
-                cursor.close()
-                return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
             cursor.close()
             return decodeStatus(32)
         except Exception as de:
