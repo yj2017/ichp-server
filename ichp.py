@@ -1535,6 +1535,29 @@ def ApprComm():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/removeApprRec',methods=["POST"])
+def removeApprRec():
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        rec_id_str=str(req['rec_id'])
+        oper_str=str(r.get(token))
+        r.srem("rec"+rec_id_str,oper_str)
+        return decodeStatus(0)
+    else:
+        return decodeStatus(8)
+
+@app.route('/removeApprCommRec',methods=["POST"])
+def removeApprCommRec():
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        comm_rec_id_str=str(req['Comm_rec_id'])
+        oper_str=str(r.get(token))
+        r.srem("comm_rec"+comm_rec_id_str,oper_str)
+        return decodeStatus(0)
+    else:
+        return decodeStatus(8)
 # comment comment
 
 
