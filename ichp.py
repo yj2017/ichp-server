@@ -463,7 +463,7 @@ def getCollEntry():
             entry_ids = cursor.fetchall()
             entryL = []
             rowCount = cursor.rowcount
-            if rowCount > 0:
+            if rowCount >= 0:
                 for i in range(rowCount):
                     sql_temp = 'select entry_id,name,content,editor,url from entry where entry_id=%d' % (
                         entry_ids[i][0])
@@ -474,9 +474,6 @@ def getCollEntry():
                     entryL.append(entry_temp)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-            else:
-                cursor.close()
-                return decodeStatus(26)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
