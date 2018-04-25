@@ -1760,44 +1760,84 @@ def recommendAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    addr = req['addr']
     if r.exists(token):
         oper = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
-            oper,)
         try:
-            cursor.execute(sql)
-            listAct = cursor.fetchall()
-            actL = []
-            if cursor.rowcount > 0 and cursor.rowcount <= 2:
-                # 返回两条推荐
-                app.logger.debug(cursor.rowcount)
-                for row in range(cursor.rowcount):
-                    activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
-                    actL.append(activity)
-            elif cursor.rowcount > 2:
-                for row in range(cursor.rowcount):
-                    if listAct[row][5] == addr:  # 地点
-                        activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[0][8], listAct[0][9])
-                app.logger.debug(len(actL))
-                if len(actL) > 2:
-                    actL = actL[:2]
-                else:
-                    for row in range(2):
-                        activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                            [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[0][9])
-                        actL.append(activity)
+            cursor.execute('select labels_id_str from activity where publisher=%s',(oper,))
+            user_labs =cursor.fetchall()
+            totalRow = cursor.rowcount
+            labs_list = []
+            small_list=[]
+            # get the tj
+            for i in range(totalRow):
+                small_list = user_labs[i][0].split(',')
+                app.logger.debug(totalRow)
+                colunmNum = len(small_list)
+                app.logger.debug(colunmNum)
+                for j in range(colunmNum):
+                    labs_list.append(small_list[j])
+             # dictionary [item:weight]
+            totalNum = len(labs_list)
+            app.logger.debug(totalNum)
+            cursor.execute('select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity ')
+            allUser_act = cursor.fetchall()
+            allRow = cursor.rowcount
+            all_list = []
+            for i in range(allRow):
+                little_list = allUser_act[i][10].split(',')
+                colunmNum = len(small_list)
+                for j in range(colunmNum):
+                    all_list.append(little_list)
+                    app.logger.debug(little_list)
+            # tf-idf
+            allNum = len(all_list)
+            Dn = 0
+            eachWeightDic={}
+            for item in labs_list:
+                if item not in eachWeightDic:
+                    Dn = all_list.count(item)
+                    if Dn>0:
+                        eachWeightDic[item] = (labs_list.count(
+                        item)/totalNum)*math.log(allNum/Dn+1)
+                    else:
+                         eachWeightDic[item]=0
+            index=0
+            w ={}
+            for rec_id_array in allUser_act:
+                rec_id=rec_id_array[0]
+                # w = {rec_id: 0}
+                w[rec_id] =0 
+                little_list = allUser_act[index][10].split(',')
+                index=index+1
+                l_len = len(little_list)
+                for item in little_list:
+                    if item in labs_list:
+                        w[rec_id] = w[rec_id]+eachWeightDic[item]/l_len
+            sorted(w.items(), key=operator.itemgetter(1))
+            recordL = []
+            keys =list(w.keys())   
+            for cnt in range(len(keys)):        
+                for k in range(allRow):
+                    if len(recordL) < 3:
+                        app.logger.debug(keys)
+                        if allUser_act[k][0] == keys[cnt]:
+                            act = Activity(allUser_act[k][0], allUser_act[k][1], allUser_act[k][2], allUser_act[k][3], allUser_act[k][4],
+                                         allUser_act[k][5], allUser_act[k][6], allUser_act[k][7], allUser_act[k][8], allUser_act[k][9])
+                            recordL.append(act)
+                    else:
+                        cursor.close()
+                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
             cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code": 0,"msg":"sucessfully" ,"data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
-            app.logger.debug(str(de))
+            app.logger.debug(de)
             cursor.close()
-            return decodeStatus(44)
+            return decodeStatus(43)
+
     else:
         cursor.close()
         return decodeStatus(8)
+
 
 # modify entry's backgroud
 
@@ -1931,50 +1971,6 @@ def SmallMap():
         cursor.close()
         return decodeStatus(8)
 
-
-@app.route('/recommendAll', methods=["POST"])
-def recommendAll():
-    cursor = conn.cursor()
-    req = request.get_json(force=True)
-    token = req['token']
-    if r.exists(token):
-        oper = int(r.get(token))
-        sql = 'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher != %d' % (
-            oper,)
-        sql2 = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder != %d' % (
-            oper,)
-        try:
-            cursor.execute(sql)
-            listAct = cursor.fetchall()
-            actL = []
-            if cursor.rowcount > 0:
-                for row in range(cursor.rowcount):
-                    activity = Activity(listAct[row][0], listAct[row][1], listAct[row][2], listAct[row][3], listAct[row]
-                                        [4], listAct[row][5], listAct[row][6], listAct[row][7], listAct[row][8], listAct[row][9])
-                    actL.append(activity)
-
-            cursor.execute(sql2)
-            listRec = cursor.fetchall()
-            recL = []
-            if cursor.rowcount > 0:
-                for row in range(cursor.rowcount):
-                    record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
-                                    [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                    recL.append(record)
-
-            if len(actL) > 2:
-                actL = actL[:2]
-                recL = recL[:2]
-
-            cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "dataAct": actL, "dataRec": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-        except Exception as de:
-            app.logger.debug(str(de))
-            cursor.close()
-            return decodeStatus(44)
-    else:
-        cursor.close()
-        return decodeStatus(8)
 
 
 
