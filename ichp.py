@@ -1037,8 +1037,6 @@ def SearchAct():
                     actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-            cursor.close()
-            return decodeStatus(32)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
