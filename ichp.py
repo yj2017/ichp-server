@@ -27,6 +27,7 @@ logging_format = logging.Formatter(
 handler.setFormatter(logging_format)
 app.logger.addHandler(handler)
 app.debug = True
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
 
 
 def getUploadDir():
