@@ -19,6 +19,7 @@ import platform
 import logging
 import mysql
 import math
+from point import Point
 import operator
 
 app = Flask(__name__)
@@ -89,7 +90,9 @@ status = {0: 'successfully',
           46: 'delete user failed',
           47: 'get address failed in mysql',
           48: 'concern failed',
-          49:'you can not concern yourself'
+          49:'you can not concern yourself',
+          50:'cancel concern failed',
+          51:'get point failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -338,7 +341,7 @@ def AddEntry():
             try:
                 cursor.execute(sql, [name, content, editor, url])
                 oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
                     oper,)
                 cursor.execute(sql)
                 conn.commit()
@@ -371,7 +374,7 @@ def modifyEntry():
         try:
             cursor.execute(sql)
             oper = int(r.get(token))
-            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -439,7 +442,7 @@ def CollEntry():
                 cursor.execute(sql)
                 oper = int(r.get(token))
                 r.sadd("coll_entry"+str(entry_id),str(oper))
-                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                     oper,)
                 cursor.execute(sql)
                 conn.commit()
@@ -587,7 +590,7 @@ def AddRec():
             cursor.execute(sql, [recorder, title, discribe,
                                  url, 0, addr, 0, 0, labels_id_str])
             app.logger.debug(sql)
-            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
                 recorder,)
             cursor.execute(sql)
             app.logger.debug(cursor.rowcount)
@@ -927,7 +930,7 @@ def CollRec():
             collector, rec_id)
         try:
             cursor.execute(sql)
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                 collector,)
             cursor.execute(sql)
             conn.commit()
@@ -944,6 +947,8 @@ def CollRec():
     else:
         cursor.close()
         return decodeStatus(8)
+
+
 
 # issue activity
 
@@ -971,7 +976,7 @@ def IssueAct():
                 cursor.execute(sql, [publisher, title, content, hold_date,
                                      hold_addr, act_src, image_src, labels_id_str])
                 oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+                sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
                     oper,)
                 cursor.execute(sql)
                 conn.commit()
@@ -1200,7 +1205,7 @@ def CollAct():
         try:
             cursor.execute(sql)
             r.sadd("coll_act"+str(act_id),collector)
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                     int(collector),)
             cursor.execute(sql)
             conn.commit()
@@ -1388,6 +1393,28 @@ def concerUser():
             conn.rollback()
             cursor.close()
             return decodeStatus(48)
+
+@app.route('/cancelConcern',methods=["POST"])
+def cancelConcern():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    user_id = int(req['user_id'])
+    if r.exists(token):
+        pay_id = int(r.get(token))
+        sql = 'delete from attention_info where pay_id=%d and be_paid_id=%d' % (
+            pay_id, user_id)
+        try:
+            cursor.execute(sql)
+            conn.commit()
+            r.srem("concern"+str(user_id),str(pay_id))
+            cursor.close()
+            return decodeStatus(0)
+        except:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(50)
+
 # approve record 点赞
 
 
@@ -1403,7 +1430,7 @@ def ApprRec():
         oper = int(oper_str)
         r.sadd("rec"+rec_id_str, oper_str)
         try:
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -1436,7 +1463,7 @@ def CommRec():
             cursor.execute(sql)
             conn.commit()
             oper = int(r.get(token))
-            sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+5 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -1557,7 +1584,7 @@ def ApprComm():
             oper_str = str(r.get(token))
             oper = int(oper_str)
             r.sadd("comm_rec"+comm_rec_id_str, oper_str)
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -1615,7 +1642,7 @@ def CommComm():
             cursor.execute(sql)
             conn.commit()
             oper = int(r.get(token))
-            sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+5 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -1643,7 +1670,7 @@ def apprCommComm():
             oper_str = str(r.get(token))
             oper = int(oper_str)
             r.sadd("comm_comm"+comm_comm_id_str, oper_str)
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+1 where user_id=%d' % (
                 oper,)
             cursor.execute(sql)
             conn.commit()
@@ -2111,6 +2138,75 @@ def getEntryAct():
         cursor.close()
         return decodeStatus(8)
 
+@app.route('/recommendAll',methods=["POST"])
+def recommendAll():
+    cursor=conn.cursor()
+
+
+@app.route('/getPoint',methods=["POST"])
+def getPoint():
+    cursor=conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        user_id=int(r.get(token))
+        sql_p='select acc_point from user where user_id=%d'%(user_id,)
+        sql_rec='select count(*) from record where recorder=%d'%(user_id,)
+        sql_entry='select count(*) from entry where editor=%d'%(user_id,)
+        sql_act='select count(*) from activity where publisher=%d'%(user_id,)
+        sql_commComm='select count(*) from comm_comm where commer=%d'%(user_id,)
+        sql_commRec='select count(*) from comm_rec where commer=%d'%(user_id,)
+        sql_collRec='select count(*) from coll_record where collector=%d'%(user_id,)
+        sql_collEntry='select count(*) from coll_entry where collector=%d'%(user_id,)
+        sql_collAct='select count(*) from coll_activity where collector=%d'%(user_id,)
+        try:
+            cursor.execute(sql_p)
+            point=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_rec)
+            recN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_entry)
+            entryN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_act)
+            actN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_commComm)
+            commCommN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_commRec)
+            commRecN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_collAct)
+            collActN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_collEntry)
+            collEntryN=cursor.fetchall()
+            cursor.close()
+            cursor=conn.cursor()
+            cursor.execute(sql_collRec)
+            collRecN=cursor.fetchall()
+            cursor.close()
+            collN=collRecN[0][0]+collActN[0][0]+collEntryN[0][0]
+            commN=commRecN[0][0]+commCommN[0][0]
+            apprN=point[0][0]-commRecN[0][0]-commCommN[0][0]-actN[0][0]-entryN[0][0]-recN[0][0]-collN
+            p=Point(point[0][0],commN,actN[0][0],entryN[0][0],recN[0][0],apprN,collN)
+            return json.dumps({"msg":"successfully","code":0,"data":p}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as e:
+            app.logger.debug(str(e))
+            cursor.close()
+            return decodeStatus(51)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
