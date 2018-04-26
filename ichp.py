@@ -1086,10 +1086,11 @@ def GetUserAct():
             publisher,)
         try:
             cursor.execute(sql)
+            act=cursor.fetchall()
             actL = []
-            for act in cursor:
-                activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3],
-                                act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+            for row in range(cursor.rowcount):
+                activity = Activity(act[row][0], act[row][1], act[row][2], act[row][3],
+                                act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
