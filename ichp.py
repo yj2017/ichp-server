@@ -801,21 +801,29 @@ def getCollRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql = 'select rec_id  from coll_record'
+        oper=str(r.get(token))
+        collector=int(oper)
+        sql = 'select rec_id  from coll_record where collector=%d'%(collector,)
         try:
             cursor.execute(sql)
             rec_ids = cursor.fetchall()
             recL = []
-            rowCount=cursor.rowcount
-            if rowCount > 0:
-                for row in range(rowCount):
-                    sql_temp='select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%d'%(rec_ids[row][0],)
-                    cursor.execute(sql_temp)
-                    listRec=cursor.fetchall()
+            listRec=[]   
+            for row in range(cursor.rowcount):
+                conn_t= mysql.connector.connect(user='ichp', password='273841', database='ichp')
+                cursor_t=conn_t.cursor()
+                cursor_t.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s',(rec_ids[row][0],))
+                listRec=cursor_t.fetchall()
+                if cursor_t.rowcount>0:
                     record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
+                    if r.sismember("coll_rec"+str(listRec[row][0]),oper):
+                        record.isColl=True
+                    else:
+                        record.isColl=False
                     recL.append(record)
-                    app.logger.debug(recL)
+                cursor_t.close()
+                conn_t.close()
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
@@ -904,28 +912,25 @@ def CollRec():
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
-        sql_rec = 'select * from record where rec_id= %d' % (rec_id,)
-        cursor.execute(sql_rec)
-        cursor.fetchall()
-        if cursor.rowcount > 0:
-            collector = int(r.get(token))
-            sql = 'insert into coll_record (collector,rec_id) values (%d,%d)' % (
-                collector, rec_id)
-            try:
-                cursor.execute(sql)
-                oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    oper,)
-                cursor.execute(sql)
-                conn.commit()
-            except Exception as de:
-                app.logger.debug(str(de))
-                conn.rollback()
-                cursor.close()
-                return decodeStatus(23)
-            else:
-                cursor.close()
-                return decodeStatus(0)
+        rec_id_str=str(rec_id)
+        oper=str(r.get(token))
+        collector = int(oper)
+        r.sadd("coll_rec"+rec_id_str,oper)
+        sql = 'insert into coll_record (collector,rec_id) values (%d,%d)' % (
+            collector, rec_id)
+        try:
+            cursor.execute(sql)
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                collector,)
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            return decodeStatus(0)
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(23)
         else:
             cursor.close()
             return decodeStatus(24)
@@ -1701,15 +1706,17 @@ def GetCommComm():
         oper=str(r.get(token))
         cursor.execute('select commer from comm_comm where comm_rec_id=%s' , (
             comm_rec_id,))
+        commer=cursor.fetchall()
         commL = []
         try:
-            for (commer,)in cursor:
+            for row in range(cursor.rowcount):
                 cursort=conn.cursor()
-                cursort.execute('select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%s and user_id=%s' ,(comm_rec_id, commer))
-                for commList in cursort:
-                    commentComm = CommentComm(commList[0], commList[1], commList[2],
-                                          commList[3], commList[4], commList[5], commList[6], commList[7])
-                    if r.sismember("comm_comm"+str(commList[0]),oper):
+                cursort.execute('select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%s and user_id=%s' ,(comm_rec_id, commer[row][0]))
+                commList=cursort.fetchall()
+                for i in range(cursort.rowcount):
+                    commentComm = CommentComm(commList[i][0], commList[i][1], commList[i][2],
+                                          commList[i][3], commList[i][4], commList[i][5], commList[i][6], commList[i][7])
+                    if r.sismember("comm_comm"+str(commList[i][0]),oper):
                         commentComm.isApprove=True
                     else:
                         commentComm.isApprove=False
