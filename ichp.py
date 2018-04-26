@@ -14,6 +14,7 @@ from activity import Activity
 from entry import Entry
 from user import User
 from comment import Comment
+from commentComm import CommentComm
 import platform
 import logging
 import mysql
@@ -1085,11 +1086,11 @@ def GetUserAct():
             publisher,)
         try:
             cursor.execute(sql)
-            act = cursor.fetchall()
             actL = []
-            activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3],
+            for act in cursor:
+                activity = Activity(act[0][0], act[0][1], act[0][2], act[0][3],
                                 act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
-            actL.append(activity)
+                actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
@@ -1598,6 +1599,44 @@ def CommComm():
         cursor.close()
         return decodeStatus(8)
 
+
+@app.route('/apprCommComm',methods=["POST"])
+def apprCommComm():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    comm_comm_id_str=str(req['comm_comm_id'])
+    if r.exists(token):
+        try:
+            oper_str=str(r.get(token))
+            oper = int(oper_str)
+            r.sadd("comm_comm"+comm_comm_id_str,oper_str)
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    oper,)
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            return json.dumps({"msg":"successfully","code":0,"data":r.scard("comm_comm"+comm_comm_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as e:
+            app.logger.debug(str(e))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(35)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+@app.route('/removeApprCommComm',methods=["POST"])
+def removeApprCommComm():
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        comm_comm_id_str=str(req['comm_comm_id'])
+        oper_str=str(r.get(token))
+        r.srem("comm_comm"+comm_comm_id_str,oper_str)
+        return decodeStatus(0)
+    else:
+        return decodeStatus(8)
 # delete comment of comment
 
 
@@ -1651,30 +1690,33 @@ def GetCommComm():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    comm_rec_id = int(req['comm_rec_id'])
+    comm_rec_id_str=str(req['comm_rec_id'])
     if r.exists(token):
-        sql_temp = 'select commer from comm_comm where comm_rec_id=%d' % (
-            comm_rec_id,)
-        cursor.execute(sql_temp)
-        commer = cursor.fetchall()[0][0]
-        sql = 'select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%d and user_id=%d' % (
-            comm_rec_id, commer)
+        comm_rec_id = int(comm_rec_id_str)
+        oper=str(r.get(token))
+        cursor.execute('select commer from comm_comm where comm_rec_id=%s' , (
+            comm_rec_id,))
+        commL = []
         try:
-            cursor.execute(sql)
-            commList = cursor.fetchall()
-            commL = []
-            if cursor.rowcount > 0:
-                for row in range(len(commList)):
-                    commentComm = Comment(commList[row][0], commList[row][1], commList[row][2],
-                                          commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
+            for (commer,)in cursor:
+                cursort=conn.cursor()
+                cursort.execute('select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%s and user_id=%s' ,(comm_rec_id, commer))
+                for commList in cursort:
+                    commentComm = CommentComm(commList[0], commList[1], commList[2],
+                                          commList[3], commList[4], commList[5], commList[6], commList[7])
+                    if r.sismember("comm_comm"+str(commList[0]),oper):
+                        commentComm.isApprove=True
+                    else:
+                        commentComm.isApprove=False
                     commL.append(commentComm)
+                cursort.close()
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)    
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(38)
-        else:
-            cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+           
     else:
         cursor.close()
         return decodeStatus(8)
