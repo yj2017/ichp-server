@@ -30,6 +30,7 @@ app.logger.addHandler(handler)
 app.debug = True
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
 
+
 def getUploadDir():
     if platform.system() == 'Windows':
         return 'D:/uploads/'
@@ -87,7 +88,7 @@ status = {0: 'successfully',
           45: 'get user information failed',
           46: 'delete user failed',
           47: 'get address failed in mysql',
-          48:'concern failed'
+          48: 'concern failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -266,15 +267,15 @@ def ModifySign():
 # allowed file type
 ALLOWED_EXTENSIONS = set(
     ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx', 'doc',
-     'WMV', 'ASF', 'AVI',  'AVS', 'FLV', 'MKV', 'MOV', '3GP', 'MP4','MPG', 'MPEG', 'DAT', 'OGM', 'VOB', 'RM', 'RMVB', 'TS', 'TP', 'IFO', 'NSV'
+     'WMV', 'ASF', 'AVI',  'AVS', 'FLV', 'MKV', 'MOV', '3GP', 'MP4', 'MPG', 'MPEG', 'DAT', 'OGM', 'VOB', 'RM', 'RMVB', 'TS', 'TP', 'IFO', 'NSV'
      'mp3', 'AAC', 'WAV', 'WMA', 'CDA', 'FLAC', 'M4A', 'MID', 'MKA', 'MP2', 'MPA', 'MPC', 'APE', 'OFR', 'OGG', 'RA', 'WV', 'TTA', 'AC3', 'DTS'
      ]
 )
 
 
 def allowed_file(filename):
-    filename_temp=filename.upper()
-    ALLOWED_EXTENSIONS_temp=set()
+    filename_temp = filename.upper()
+    ALLOWED_EXTENSIONS_temp = set()
     for allow in ALLOWED_EXTENSIONS:
         ALLOWED_EXTENSIONS_temp.add(allow.upper())
     return '.' in filename_temp and filename_temp.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS_temp
@@ -495,7 +496,8 @@ def delCollEntry():
     token = req['token']
     entry_id = int(req['entry_id'])
     if r.exists(token):
-        sql_isExist = 'select * from coll_entry where entry_id=%d' % (entry_id,)
+        sql_isExist = 'select * from coll_entry where entry_id=%d' % (
+            entry_id,)
         cursor.execute(sql_isExist)
         cursor.fetchall()
         if cursor.rowcount > 0:
@@ -557,7 +559,6 @@ def GetEntry():
     else:
         cursor.close()
         return decodeStatus(8)
-
 
 
 # issue record
@@ -658,7 +659,6 @@ def DelRec():
         return decodeStatus(8)
 
 
-
 # modify record
 
 
@@ -703,7 +703,7 @@ def GetAllRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        oper=str(r.get(token))
+        oper = str(r.get(token))
         sql = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record'
         try:
             cursor.execute(sql)
@@ -714,10 +714,10 @@ def GetAllRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], listRec[row][1], listRec[row][2], listRec[row][3], listRec[row]
                                     [4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                    if r.sismember("rec"+str(record.rec_id),oper):
-                        record.isApprove=True
+                    if r.sismember("rec"+str(record.rec_id), oper):
+                        record.isApprove = True
                     else:
-                        record.isApprove=False
+                        record.isApprove = False
                     recL.append(record)
             cursor.close()
             app.logger.debug(str(recL))
@@ -769,7 +769,7 @@ def GetRec():
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
-        oper=str(r.get(token))
+        oper = str(r.get(token))
         sql = 'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where rec_id=%d' % rec_id
         try:
             cursor.execute(sql)
@@ -779,10 +779,10 @@ def GetRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                    if r.sismember("rec"+str(rec_id),oper):
-                        record.isApprove=True
+                    if r.sismember("rec"+str(rec_id), oper):
+                        record.isApprove = True
                     else:
-                        record.isApprove=False
+                        record.isApprove = False
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -795,35 +795,36 @@ def GetRec():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/getCollRec',methods=["POST"])
+
+@app.route('/getCollRec', methods=["POST"])
 def getCollRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        oper=str(r.get(token))
-        collector=int(oper)
-        sql = 'select rec_id  from coll_record where collector=%d'%(collector,)
+        oper = str(r.get(token))
+        collector = int(oper)
+        sql = 'select rec_id  from coll_record where collector=%d;' % (
+            collector,)
         try:
             cursor.execute(sql)
             rec_ids = cursor.fetchall()
             recL = []
-            listRec=[]   
+            listRec = []
             for row in range(cursor.rowcount):
-                conn_t= mysql.connector.connect(user='ichp', password='273841', database='ichp')
-                cursor_t=conn_t.cursor()
-                cursor_t.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s',(rec_ids[row][0],))
-                listRec=cursor_t.fetchall()
-                if cursor_t.rowcount>0:
-                    record = Record(listRec[row][0],  listRec[row][1], listRec[row][2], listRec[row]
-                                    [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9], listRec[row][10])
-                    if r.sismember("coll_rec"+str(listRec[row][0]),oper):
-                        record.isColl=True
+                cursor_t=conn.cursor()
+                cursor_t.execute(
+                    'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s;', (int(rec_ids[row][0]),))
+                listRec = cursor_t.fetchall()
+                if cursor_t.rowcount > 0:
+                    record = Record(listRec[0][0],  listRec[0][1], listRec[0][2], listRec[0][3], listRec[0][4],
+                                    listRec[0][5], listRec[0][6], listRec[0][7], listRec[0][8], listRec[0][9], listRec[0][10])
+                    if r.sismember("coll_rec"+str(listRec[0][0]), oper):
+                        record.isColl = True
                     else:
-                        record.isColl=False
+                        record.isColl = False
                     recL.append(record)
                 cursor_t.close()
-                conn_t.close()
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": recL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
@@ -912,10 +913,10 @@ def CollRec():
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
-        rec_id_str=str(rec_id)
-        oper=str(r.get(token))
+        rec_id_str = str(rec_id)
+        oper = str(r.get(token))
         collector = int(oper)
-        r.sadd("coll_rec"+rec_id_str,oper)
+        r.sadd("coll_rec"+rec_id_str, oper)
         sql = 'insert into coll_record (collector,rec_id) values (%d,%d)' % (
             collector, rec_id)
         try:
@@ -1095,11 +1096,11 @@ def GetUserAct():
             publisher,)
         try:
             cursor.execute(sql)
-            act=cursor.fetchall()
+            act = cursor.fetchall()
             actL = []
             for row in range(cursor.rowcount):
                 activity = Activity(act[row][0], act[row][1], act[row][2], act[row][3],
-                                act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
+                                    act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1139,26 +1140,28 @@ def GetAct():
         return decodeStatus(8)
 # collect activity
 
-@app.route('/getCollAct',methods=["POST"])
+
+@app.route('/getCollAct', methods=["POST"])
 def getCollAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql = 'select act_id from coll_activity '
+        oper = str(r.get(token))
         try:
-            cursor.execute(sql)
+            cursor.execute(
+                'select act_id from coll_activity where collector= %s ;', (oper,))
             act_ids = cursor.fetchall()
             actL = []
-            rowCount=cursor.rowcount
-            if rowCount>0:
+            rowCount = cursor.rowcount
+            if rowCount > 0:
                 for i in range(rowCount):
-                    sql_temp='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%d' % (
-                    act_ids[i][0],)
-                    cursor.execute(sql_temp)
-                    act=cursor.fechall()
-                    activity = Activity(act[0][0],
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                    cursor.execute(
+                        'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%s;', (act_ids[i][0],))
+                    act = cursor.fetchall()
+                    activity = Activity(act[i][0],
+                                        act[i][1], act[i][2], act[i][3], act[i][4], act[i][5], act[i][6], act[i][7], act[i][8], act[i][9])
+                    r.sadd("coll_act"+str(act[i][0]), oper)
                     actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1169,7 +1172,8 @@ def getCollAct():
     else:
         cursor.close()
         return decodeStatus(8)
-        
+
+
 @app.route('/collAct', methods=["POST"])
 def CollAct():
     cursor = conn.cursor()
@@ -1207,7 +1211,8 @@ def CollAct():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/delCollAct',methods=["POST"])
+
+@app.route('/delCollAct', methods=["POST"])
 def delCollAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -1247,6 +1252,8 @@ def delCollAct():
         return decodeStatus(8)
 
 # search user information
+
+
 @app.route('/searchUserInfo', methods=["POST"])
 def SearchUserInfo():
     cursor = conn.cursor()
@@ -1314,7 +1321,8 @@ def GetMyConc():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/getConcMe',methods=["POST"])
+
+@app.route('/getConcMe', methods=["POST"])
 def getConcMe():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -1351,15 +1359,17 @@ def getConcMe():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/concerUser',methods=["POST"])
+
+@app.route('/concerUser', methods=["POST"])
 def concerUser():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    user_id=int(req['user_id'])
+    user_id = int(req['user_id'])
     if r.exists(token):
         pay_id = int(r.get(token))
-        sql='insert into attention_info(pay_id,be_paid_id) values(%d,%d)'%(pay_id,user_id)
+        sql = 'insert into attention_info(pay_id,be_paid_id) values(%d,%d)' % (
+            pay_id, user_id)
         try:
             cursor.execute(sql)
             conn.commit()
@@ -1374,22 +1384,22 @@ def concerUser():
 
 @app.route('/apprRec', methods=["POST"])
 def ApprRec():
-    cursor=conn.cursor()
+    cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        rec_id_str=str(req['rec_id'])
+        rec_id_str = str(req['rec_id'])
         rec_id = int(rec_id_str)
-        oper_str=str(r.get(token))
-        oper=int(oper_str)  
-        r.sadd("rec"+rec_id_str,oper_str)
+        oper_str = str(r.get(token))
+        oper = int(oper_str)
+        r.sadd("rec"+rec_id_str, oper_str)
         try:
             sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    oper,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
             cursor.close()
-            return json.dumps({"msg":"successfully","code":0,"data":r.scard("rec"+rec_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"msg": "successfully", "code": 0, "data": r.scard("rec"+rec_id_str)}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
             conn.rollback()
@@ -1442,11 +1452,12 @@ def GetCommRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        oper=str(r.get(token))
+        oper = str(r.get(token))
         rec_id = int(req['rec_id'])
         commL = []
-        cursor.execute('select commer from comm_rec where rec_id= %s', ( rec_id,))
-        commer=cursor.fetchall()
+        cursor.execute(
+            'select commer from comm_rec where rec_id= %s', (rec_id,))
+        commer = cursor.fetchall()
         if cursor.rowcount > 0:
             sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
                 rec_id, commer[0][0])
@@ -1457,10 +1468,10 @@ def GetCommRec():
                     for row in range(cursor.rowcount):
                         commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
                                              commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
-                        if r.sismember("comm_rec"+str(commentRec.comm_rec_id),oper):
-                            commentRec.isApprove=True
+                        if r.sismember("comm_rec"+str(commentRec.comm_rec_id), oper):
+                            commentRec.isApprove = True
                         else:
-                            commentRec.isApprove=False
+                            commentRec.isApprove = False
                         commL.append(commentRec)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1531,18 +1542,18 @@ def ApprComm():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    comm_rec_id_str=str(req['comm_rec_id'])
+    comm_rec_id_str = str(req['comm_rec_id'])
     if r.exists(token):
         try:
-            oper_str=str(r.get(token))
+            oper_str = str(r.get(token))
             oper = int(oper_str)
-            r.sadd("comm_rec"+comm_rec_id_str,oper_str)
+            r.sadd("comm_rec"+comm_rec_id_str, oper_str)
             sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    oper,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
             cursor.close()
-            return json.dumps({"msg":"successfully","code":0,"data":r.scard("comm_rec"+comm_rec_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"msg": "successfully", "code": 0, "data": r.scard("comm_rec"+comm_rec_id_str)}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
             conn.rollback()
@@ -1552,26 +1563,28 @@ def ApprComm():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/removeApprRec',methods=["POST"])
+
+@app.route('/removeApprRec', methods=["POST"])
 def removeApprRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        rec_id_str=str(req['rec_id'])
-        oper_str=str(r.get(token))
-        r.srem("rec"+rec_id_str,oper_str)
+        rec_id_str = str(req['rec_id'])
+        oper_str = str(r.get(token))
+        r.srem("rec"+rec_id_str, oper_str)
         return decodeStatus(0)
     else:
         return decodeStatus(8)
 
-@app.route('/removeApprCommRec',methods=["POST"])
+
+@app.route('/removeApprCommRec', methods=["POST"])
 def removeApprCommRec():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        comm_rec_id_str=str(req['comm_rec_id'])
-        oper_str=str(r.get(token))
-        r.srem("comm_rec"+comm_rec_id_str,oper_str)
+        comm_rec_id_str = str(req['comm_rec_id'])
+        oper_str = str(r.get(token))
+        r.srem("comm_rec"+comm_rec_id_str, oper_str)
         return decodeStatus(0)
     else:
         return decodeStatus(8)
@@ -1610,23 +1623,23 @@ def CommComm():
         return decodeStatus(8)
 
 
-@app.route('/apprCommComm',methods=["POST"])
+@app.route('/apprCommComm', methods=["POST"])
 def apprCommComm():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    comm_comm_id_str=str(req['comm_comm_id'])
+    comm_comm_id_str = str(req['comm_comm_id'])
     if r.exists(token):
         try:
-            oper_str=str(r.get(token))
+            oper_str = str(r.get(token))
             oper = int(oper_str)
-            r.sadd("comm_comm"+comm_comm_id_str,oper_str)
+            r.sadd("comm_comm"+comm_comm_id_str, oper_str)
             sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    oper,)
+                oper,)
             cursor.execute(sql)
             conn.commit()
             cursor.close()
-            return json.dumps({"msg":"successfully","code":0,"data":r.scard("comm_comm"+comm_comm_id_str)},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"msg": "successfully", "code": 0, "data": r.scard("comm_comm"+comm_comm_id_str)}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
             conn.rollback()
@@ -1636,14 +1649,15 @@ def apprCommComm():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/removeApprCommComm',methods=["POST"])
+
+@app.route('/removeApprCommComm', methods=["POST"])
 def removeApprCommComm():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        comm_comm_id_str=str(req['comm_comm_id'])
-        oper_str=str(r.get(token))
-        r.srem("comm_comm"+comm_comm_id_str,oper_str)
+        comm_comm_id_str = str(req['comm_comm_id'])
+        oper_str = str(r.get(token))
+        r.srem("comm_comm"+comm_comm_id_str, oper_str)
         return decodeStatus(0)
     else:
         return decodeStatus(8)
@@ -1700,35 +1714,36 @@ def GetCommComm():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
-    comm_rec_id_str=str(req['comm_rec_id'])
+    comm_rec_id_str = str(req['comm_rec_id'])
     if r.exists(token):
         comm_rec_id = int(comm_rec_id_str)
-        oper=str(r.get(token))
-        cursor.execute('select commer from comm_comm where comm_rec_id=%s' , (
+        oper = str(r.get(token))
+        cursor.execute('select commer from comm_comm where comm_rec_id=%s', (
             comm_rec_id,))
-        commer=cursor.fetchall()
+        commer = cursor.fetchall()
         commL = []
         try:
             for row in range(cursor.rowcount):
-                cursort=conn.cursor()
-                cursort.execute('select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%s and user_id=%s' ,(comm_rec_id, commer[row][0]))
-                commList=cursort.fetchall()
+                cursort = conn.cursor()
+                cursort.execute(
+                    'select comm_comm_id,comm_rec_id,commer,content,appr_num,comm_date,image_src,account_name from comm_comm,user where comm_rec_id=%s and user_id=%s', (comm_rec_id, commer[row][0]))
+                commList = cursort.fetchall()
                 for i in range(cursort.rowcount):
                     commentComm = CommentComm(commList[i][0], commList[i][1], commList[i][2],
-                                          commList[i][3], commList[i][4], commList[i][5], commList[i][6], commList[i][7])
-                    if r.sismember("comm_comm"+str(commList[i][0]),oper):
-                        commentComm.isApprove=True
+                                              commList[i][3], commList[i][4], commList[i][5], commList[i][6], commList[i][7])
+                    if r.sismember("comm_comm"+str(commList[i][0]), oper):
+                        commentComm.isApprove = True
                     else:
-                        commentComm.isApprove=False
+                        commentComm.isApprove = False
                     commL.append(commentComm)
                 cursort.close()
             cursor.close()
-            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)    
+            return json.dumps({"msg": "successfully", "code": 0, "date": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
             return decodeStatus(38)
-           
+
     else:
         cursor.close()
         return decodeStatus(8)
@@ -1748,12 +1763,13 @@ def recommendRec():
         #     oper,)
         # sql_allUser_lab = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record '
         try:
-            cursor.execute('select labels_id_str from record where recorder=%s',(oper,))
+            cursor.execute(
+                'select labels_id_str from record where recorder=%s', (oper,))
             # cursor.execute(sql_user_lab)
-            user_labs =cursor.fetchall()
+            user_labs = cursor.fetchall()
             totalRow = cursor.rowcount
             labs_list = []
-            small_list=[]
+            small_list = []
             # get the tj
             for i in range(totalRow):
                 small_list = user_labs[i][0].split(',')
@@ -1765,7 +1781,8 @@ def recommendRec():
              # dictionary [item:weight]
             totalNum = len(labs_list)
             app.logger.debug(totalNum)
-            cursor.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record ')
+            cursor.execute(
+                'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record ')
             allUser_record = cursor.fetchall()
             allRow = cursor.rowcount
             all_list = []
@@ -1778,31 +1795,31 @@ def recommendRec():
             # tf-idf
             allNum = len(all_list)
             Dn = 0
-            eachWeightDic={}
+            eachWeightDic = {}
             for item in labs_list:
                 if item not in eachWeightDic:
                     Dn = all_list.count(item)
-                    if Dn>0:
+                    if Dn > 0:
                         eachWeightDic[item] = (labs_list.count(
-                        item)/totalNum)*math.log(allNum/Dn+1)
+                            item)/totalNum)*math.log(allNum/Dn+1)
                     else:
-                         eachWeightDic[item]=0
-            index=0
-            w ={}
+                        eachWeightDic[item] = 0
+            index = 0
+            w = {}
             for rec_id_array in allUser_record:
-                rec_id=rec_id_array[0]
+                rec_id = rec_id_array[0]
                 # w = {rec_id: 0}
-                w[rec_id] =0 
+                w[rec_id] = 0
                 little_list = allUser_record[index][10].split(',')
-                index=index+1
+                index = index+1
                 l_len = len(little_list)
                 for item in little_list:
                     if item in labs_list:
                         w[rec_id] = w[rec_id]+eachWeightDic[item]/l_len
             sorted(w.items(), key=operator.itemgetter(1))
             recordL = []
-            keys =list(w.keys())   
-            for cnt in range(len(keys)):        
+            keys = list(w.keys())
+            for cnt in range(len(keys)):
                 for k in range(allRow):
                     if len(recordL) < 3:
                         app.logger.debug(keys)
@@ -1812,9 +1829,9 @@ def recommendRec():
                             recordL.append(rec)
                     else:
                         cursor.close()
-                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
+                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
             cursor.close()
-            return json.dumps({"code": 0,"msg":"sucessfully" ,"data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code": 0, "msg": "sucessfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
@@ -1835,11 +1852,12 @@ def recommendAct():
     if r.exists(token):
         oper = int(r.get(token))
         try:
-            cursor.execute('select labels_id_str from activity where publisher=%s',(oper,))
-            user_labs =cursor.fetchall()
+            cursor.execute(
+                'select labels_id_str from activity where publisher=%s', (oper,))
+            user_labs = cursor.fetchall()
             totalRow = cursor.rowcount
             labs_list = []
-            small_list=[]
+            small_list = []
             # get the tj
             for i in range(totalRow):
                 small_list = user_labs[i][0].split(',')
@@ -1851,7 +1869,8 @@ def recommendAct():
              # dictionary [item:weight]
             totalNum = len(labs_list)
             app.logger.debug(totalNum)
-            cursor.execute('select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity ')
+            cursor.execute(
+                'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity ')
             allUser_act = cursor.fetchall()
             allRow = cursor.rowcount
             all_list = []
@@ -1864,43 +1883,43 @@ def recommendAct():
             # tf-idf
             allNum = len(all_list)
             Dn = 0
-            eachWeightDic={}
+            eachWeightDic = {}
             for item in labs_list:
                 if item not in eachWeightDic:
                     Dn = all_list.count(item)
-                    if Dn>0:
+                    if Dn > 0:
                         eachWeightDic[item] = (labs_list.count(
-                        item)/totalNum)*math.log(allNum/Dn+1)
+                            item)/totalNum)*math.log(allNum/Dn+1)
                     else:
-                         eachWeightDic[item]=0
-            index=0
-            w ={}
+                        eachWeightDic[item] = 0
+            index = 0
+            w = {}
             for rec_id_array in allUser_act:
-                rec_id=rec_id_array[0]
+                rec_id = rec_id_array[0]
                 # w = {rec_id: 0}
-                w[rec_id] =0 
+                w[rec_id] = 0
                 little_list = allUser_act[index][9].split(',')
-                index=index+1
+                index = index+1
                 l_len = len(little_list)
                 for item in little_list:
                     if item in labs_list:
                         w[rec_id] = w[rec_id]+eachWeightDic[item]/l_len
             sorted(w.items(), key=operator.itemgetter(1))
             recordL = []
-            keys =list(w.keys())   
-            for cnt in range(len(keys)):        
+            keys = list(w.keys())
+            for cnt in range(len(keys)):
                 for k in range(allRow):
                     if len(recordL) < 3:
                         app.logger.debug(keys)
                         if allUser_act[k][0] == keys[cnt]:
                             act = Activity(allUser_act[k][0], allUser_act[k][1], allUser_act[k][2], allUser_act[k][3], allUser_act[k][4],
-                                         allUser_act[k][5], allUser_act[k][6], allUser_act[k][7], allUser_act[k][8], allUser_act[k][9])
+                                           allUser_act[k][5], allUser_act[k][6], allUser_act[k][7], allUser_act[k][8], allUser_act[k][9])
                             recordL.append(act)
                     else:
                         cursor.close()
-                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
+                        return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
             cursor.close()
-            return json.dumps({"code": 0,"msg":"sucessfully" ,"data": recordL},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code": 0, "msg": "sucessfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
@@ -2043,7 +2062,8 @@ def SmallMap():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/getEntryRec',methods=["POST"])
+
+@app.route('/getEntryRec', methods=["POST"])
 def getEntryRec():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -2051,7 +2071,8 @@ def getEntryRec():
     entry_id = str(req['entry_id'])
     if r.exists(token):
         try:
-            cursor.execute('select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where labels_id_str like %s' ,('%'+str(entry_id)+'%',))
+            cursor.execute(
+                'select rec_id, recorder,title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str  from record where labels_id_str like %s', ('%'+str(entry_id)+'%',))
             listRec = cursor.fetchall()
             recL = []
             if cursor.rowcount > 0:
@@ -2070,7 +2091,8 @@ def getEntryRec():
         cursor.close()
         return decodeStatus(8)
 
-@app.route('/getEntryAct',methods=["POST"])
+
+@app.route('/getEntryAct', methods=["POST"])
 def getEntryAct():
     cursor = conn.cursor()
     req = request.get_json(force=True)
@@ -2078,13 +2100,14 @@ def getEntryAct():
     entry_id = str(req['entry_id'])
     if r.exists(token):
         try:
-            cursor.execute('select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where labels_id_str like %s' ,('%'+str(entry_id)+'%',))
+            cursor.execute(
+                'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where labels_id_str like %s', ('%'+str(entry_id)+'%',))
             act = cursor.fetchall()
             actL = []
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     activity = Activity(act[0][0],
-                                act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                                        act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
                     actL.append(activity)
                     app.logger.debug(actL)
             cursor.close()
@@ -2097,5 +2120,6 @@ def getEntryAct():
         cursor.close()
         return decodeStatus(8)
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True)
+    app.run(host='0.0.0.0', debug=True)
