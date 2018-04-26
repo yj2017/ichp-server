@@ -88,7 +88,8 @@ status = {0: 'successfully',
           45: 'get user information failed',
           46: 'delete user failed',
           47: 'get address failed in mysql',
-          48: 'concern failed'
+          48: 'concern failed',
+          49:'you can not concern yourself'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -1309,6 +1310,7 @@ def GetMyConc():
                         listUser = cursor.fetchall()
                         user = User(listUser[0][0], listUser[0][1], listUser[0][2], listUser[0][3],
                                     listUser[0][4], listUser[0][5], listUser[0][6], listUser[0][7], listUser[0][8])
+                        
                         userL.append(user)
                     except Exception as e:
                         app.logger.debug(str(e))
@@ -1371,11 +1373,15 @@ def concerUser():
     user_id = int(req['user_id'])
     if r.exists(token):
         pay_id = int(r.get(token))
+        if user_id==pay_id:
+            cursor.close()
+            return decodeStatus(49)
         sql = 'insert into attention_info(pay_id,be_paid_id) values(%d,%d)' % (
             pay_id, user_id)
         try:
             cursor.execute(sql)
             conn.commit()
+            r.sadd("concern"+str(user_id),str(pay_id))
             cursor.close()
             return decodeStatus(0)
         except:
@@ -1978,6 +1984,10 @@ def GetUserInfo():
             for row in range(cursor.rowcount):
                 user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
                             listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                if r.sismember("concern"+str(user_id),str(r.get(token))):
+                    user.isConcern=True
+                else:
+                    user.isConcern=False
                 userL.append(user)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1990,36 +2000,14 @@ def GetUserInfo():
         return decodeStatus(8)
 
 
-@app.route('/cancelAccount', methods=['POST'])
-def CancelAccount():
-    cursor = conn.cursor()
+@app.route('/loginOut', methods=['POST'])
+def loginOut():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        user_id = int(r.get(token))
-        sql1 = 'delete from record where recorder=%d' % (user_id,)
-        sql2 = 'delete from activity where publisher=%d' % (user_id,)
-        sql3 = 'delete from entry where editor=%d' % (user_id,)
-        sql4 = 'delete from comm_rec where commer=%d' % (user_id,)
-        sql5 = 'delete from comm_comm where commer=%d' % (user_id,)
-        sql = 'delete  from user where user_id=%d ' % (user_id,)
-        try:
-            cursor.execute(sql1)
-            cursor.execute(sql2)
-            cursor.execute(sql3)
-            cursor.execute(sql4)
-            cursor.execute(sql5)
-            cursor.execute(sql)
-            conn.commit()
-            if cursor.rowcount > 0:
-                cursor.close()
-                return decodeStatus(0)
-        except Exception as de:
-            app.logger.debug(str(de))
-            cursor.close()
-            return decodeStatus(46)
+        r.delete(token)
+        return decodeStatus(0)
     else:
-        cursor.close()
         return decodeStatus(8)
 
 
