@@ -437,6 +437,7 @@ def CollEntry():
             try:
                 cursor.execute(sql)
                 oper = int(r.get(token))
+                r.sadd("coll_entry"+str(entry_id),str(oper))
                 sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
                     oper,)
                 cursor.execute(sql)
@@ -477,6 +478,10 @@ def getCollEntry():
                     entry = cursor.fetchall()
                     entry_temp = Entry(entry[0][0], entry[0][1],
                                        entry[0][2], entry[0][3], entry[0][4])
+                    if r.sismember("coll_entry"+str(entry_temp.entry_id),str(r.get(token))):
+                        entry_temp.isColl=True
+                    else:
+                        entry_temp.isColl=False
                     entryL.append(entry_temp)
                 cursor.close()
                 return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1150,7 +1155,7 @@ def getCollAct():
         oper = str(r.get(token))
         try:
             cursor.execute(
-                'select act_id from coll_activity where collector= %s ;', (oper,))
+                'select act_id from coll_activity where collector= %s ;', (int(oper),))
             act_ids = cursor.fetchall()
             actL = []
             rowCount = cursor.rowcount
@@ -1159,9 +1164,12 @@ def getCollAct():
                     cursor.execute(
                         'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%s;', (act_ids[i][0],))
                     act = cursor.fetchall()
-                    activity = Activity(act[i][0],
-                                        act[i][1], act[i][2], act[i][3], act[i][4], act[i][5], act[i][6], act[i][7], act[i][8], act[i][9])
-                    r.sadd("coll_act"+str(act[i][0]), oper)
+                    activity = Activity(act[0][0],
+                                        act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                    if r.sismember("coll_act"+str(act[0][0]),oper):
+                        activity.isColl=True
+                    else:
+                        activity.isColl=False
                     actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1180,33 +1188,28 @@ def CollAct():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        act_id = int(req['act_id'])
+        act_id = req['act_id']
         sql_act = 'select * from activity where act_id= %d' % (act_id,)
         cursor.execute(sql_act)
         temp = cursor.fetchall()
         app.logger.debug(temp)
-        if cursor.rowcount > 0:
-            collector = int(r.get(token))
-            sql = 'insert into coll_activity (collector,act_id) values (%d,%d)' % (
-                collector, act_id)
-            try:
-                cursor.execute(sql)
-                oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                    oper,)
-                cursor.execute(sql)
-                conn.commit()
-            except Exception as de:
-                app.logger.debug(str(de))
-                conn.rollback()
-                cursor.close()
-                return decodeStatus(21)
-            else:
-                cursor.close()
-                return decodeStatus(0)
-        else:
+        collector = str(r.get(token))
+        sql = 'insert into coll_activity (collector,act_id) values (%d,%d)' % (
+                int(collector), int(act_id))
+        try:
+            cursor.execute(sql)
+            r.sadd("coll_act"+str(act_id),collector)
+            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
+                    int(collector),)
+            cursor.execute(sql)
+            conn.commit()
             cursor.close()
-            return decodeStatus(22)
+            return decodeStatus(0)
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(21)
     else:
         cursor.close()
         return decodeStatus(8)
