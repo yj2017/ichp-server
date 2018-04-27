@@ -727,6 +727,10 @@ def GetAllRec():
                         record.isApprove = True
                     else:
                         record.isApprove = False
+                    if r.sismember("coll_rec"+str(record.rec_id), oper):
+                        record.isColl = True
+                    else:
+                        record.isColl = False                
                     recL.append(record)
             cursor.close()
             app.logger.debug(str(recL))
@@ -756,6 +760,14 @@ def GetUserRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], recorder, listRec[row][1], listRec[row][2], listRec[row]
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
+                    if r.sismember("rec"+str(listRec[row][0]), str(recorder)):
+                        record.isApprove = True
+                    else:
+                        record.isApprove = False
+                    if r.sismember("coll_rec"+str(listRec[row][0]), str(recorder)):
+                        record.isColl = True
+                    else:
+                        record.isColl = False
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -792,6 +804,10 @@ def GetRec():
                         record.isApprove = True
                     else:
                         record.isApprove = False
+                    if r.sismember("coll_rec"+str(rec_id), oper):
+                        record.isColl = True
+                    else:
+                        record.isColl = False
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
@@ -832,6 +848,10 @@ def getCollRec():
                         record.isColl = True
                     else:
                         record.isColl = False
+                    if r.sismember("rec"+str(listRec[0][0]), oper):
+                        record.isApprove = True
+                    else:
+                        record.isApprove = False
                     recL.append(record)
                 cursor_t.close()
             cursor.close()
@@ -944,6 +964,40 @@ def CollRec():
         else:
             cursor.close()
             return decodeStatus(24)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
+
+@app.route('/modifyRecLab',methods=["POST"])
+def modifyRecLab():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    rec_id = int(req['rec_id'])
+    token = req['token']
+    if r.exists(token):
+        oper = int(r.get(token))
+        sql_temp = 'select recorder from record where rec_id=%d' % (rec_id,)
+        cursor.execute(sql_temp)
+        recorder = cursor.fetchall()
+        if oper == recorder[0][0]:
+            labels_id_str = req['labels_id_str']
+            sql = 'update record set labels_id_str="%s" where rec_id=%d' % (
+                labels_id_str, rec_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(29)
+            else:
+                cursor.close()
+                return decodeStatus(0)
+        else:
+            cursor.close()
+            return decodeStatus(15)
     else:
         cursor.close()
         return decodeStatus(8)
