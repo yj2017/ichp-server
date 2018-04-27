@@ -1260,10 +1260,6 @@ def CollAct():
     token = req['token']
     if r.exists(token):
         act_id = req['act_id']
-        sql_act = 'select * from activity where act_id= %d' % (act_id,)
-        cursor.execute(sql_act)
-        temp = cursor.fetchall()
-        app.logger.debug(temp)
         collector = str(r.get(token))
         sql = 'insert into coll_activity (collector,act_id) values (%d,%d)' % (
                 int(collector), int(act_id))
