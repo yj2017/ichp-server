@@ -1344,6 +1344,10 @@ def SearchUserInfo():
             for row in range(cursor.rowcount):
                 user = User(listUser[row][0], listUser[row][1], listUser[row][2], listUser[row][3],
                             listUser[row][4], listUser[row][5], listUser[row][6], listUser[row][7], listUser[row][8])
+                if r.sismember("concern"+str(listUser[row][0]),str(r.get(token))):
+                    user.isConcern=True
+                else:
+                    user.isConcern=False
                 userL.append(user)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": userL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1380,7 +1384,10 @@ def GetMyConc():
                         listUser = cursor.fetchall()
                         user = User(listUser[0][0], listUser[0][1], listUser[0][2], listUser[0][3],
                                     listUser[0][4], listUser[0][5], listUser[0][6], listUser[0][7], listUser[0][8])
-                        
+                        if r.sismember("concern"+str(r.get(token)),str(listUser[0][0])):
+                            user.isConcern=True
+                        else:
+                            user.isConcern=False
                         userL.append(user)
                     except Exception as e:
                         app.logger.debug(str(e))
@@ -1419,6 +1426,10 @@ def getConcMe():
                         listUser = cursor.fetchall()
                         user = User(listUser[0][0], listUser[0][1], listUser[0][2], listUser[0][3],
                                     listUser[0][4], listUser[0][5], listUser[0][6], listUser[0][7], listUser[0][8])
+                        if r.sismember("concern"+str(listUser[0][0]),str(r.get(token))):
+                            user.isConcern=True
+                        else:
+                            user.isConcern=False
                         userL.append(user)
                     except Exception as e:
                         app.logger.debug(str(e))
