@@ -872,33 +872,27 @@ def DelCollRec():
     token = req['token']
     rec_id = int(req['rec_id'])
     if r.exists(token):
-        sql_isExist = 'select * from coll_record where rec_id=%d' % (rec_id,)
-        cursor.execute(sql_isExist)
-        cursor.fetchall()
-        if cursor.rowcount > 0:
-            oper = int(r.get(token))
-            sql_temp = 'select collector from coll_record where rec_id=%d' % (
+        oper = int(r.get(token))
+        sql_temp = 'select collector from coll_record where rec_id=%d' % (
                 rec_id,)
+        try:
             cursor.execute(sql_temp)
             recorder = cursor.fetchall()
             if oper == recorder[0][0]:
                 sql = 'delete from coll_record where rec_id=%d' % (rec_id,)
-                try:
-                    cursor.execute(sql)
-                    conn.commit()
-                    cursor.close()
-                    return decodeStatus(0)
-                except Exception as de:
-                    app.logger.debug(str(de))
-                    conn.rollback()
-                    cursor.close()
-                    return decodeStatus(27)
+                cursor.execute(sql)
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
             else:
                 cursor.close()
                 return decodeStatus(15)  # 不是发布者删除record
-        else:
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
             cursor.close()
-            return decodeStatus(24)
+            return decodeStatus(27)
+            
     else:
         cursor.close()
         return decodeStatus(8)
