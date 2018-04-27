@@ -1002,8 +1002,6 @@ def modifyRecLab():
         cursor.close()
         return decodeStatus(8)
 
-
-
 # issue activity
 
 
@@ -2208,6 +2206,9 @@ def getEntryAct():
 @app.route('/recommendAll',methods=["POST"])
 def recommendAll():
     cursor=conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    # if r.exists(token):
 
 
 @app.route('/getPoint',methods=["POST"])
