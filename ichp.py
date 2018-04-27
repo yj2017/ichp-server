@@ -552,15 +552,15 @@ def GetEntry():
             cursor.execute(sql)
             entry = cursor.fetchall()
             entryL = []
-            if cursor.rowcount > 0:
-                entry = Entry(entry[0][0], entry[0][1],
+            entry = Entry(entry[0][0], entry[0][1],
                               entry[0][2], entry[0][3], entry[0][4])
-                entryL.append(entry)
-                cursor.close()
-                return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            if r.sismember("coll_entry"+str(entry.entry_id),str(r.get(token))):
+                entry.isColl=True
             else:
-                cursor.close()
-                return decodeStatus(26)
+                entry.isColl=False
+            entryL.append(entry)
+            cursor.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": entryL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(str(de))
             cursor.close()
@@ -1138,7 +1138,12 @@ def GetAllAct():
             for row in range(cursor.rowcount):
                 activity = Activity(act[row][0], act[row][1],
                                     act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
+                if r.sismember("coll_act"+str(act[0][0]),str(r.get(token))):
+                    activity.isColl=True
+                else:
+                    activity.isColl=False
                 actL.append(activity)
+
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
@@ -1166,6 +1171,10 @@ def GetUserAct():
             for row in range(cursor.rowcount):
                 activity = Activity(act[row][0], act[row][1], act[row][2], act[row][3],
                                     act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
+                if r.sismember("coll_act"+str(act[0][0]),str(r.get(token))):
+                    activity.isColl=True
+                else:
+                    activity.isColl=False
                 actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -1193,6 +1202,10 @@ def GetAct():
             actL = []
             activity = Activity(act[0][0],
                                 act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+            if r.sismember("coll_act"+str(act[0][0]),str(r.get(token))):
+                activity.isColl=True
+            else:
+                activity.isColl=False
             actL.append(activity)
             cursor.close()
             return json.dumps({"msg": "successfully", "code": 0, "data": actL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
