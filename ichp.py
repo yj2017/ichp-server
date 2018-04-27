@@ -520,7 +520,7 @@ def delCollEntry():
                 try:
                     cursor.execute(sql)
                     conn.commit()
-                    s.delete("coll_entry"+str(entry_id),str(oper))
+                    r.delete("coll_entry"+str(entry_id),str(oper))
                     cursor.close()
                     return decodeStatus(0)
                 except Exception as de:
@@ -883,7 +883,7 @@ def DelCollRec():
                 sql = 'delete from coll_record where rec_id=%d' % (rec_id,)
                 cursor.execute(sql)
                 conn.commit()
-                s.delete("coll_rec"+str(rec_id),str(oper))
+                r.delete("coll_rec"+str(rec_id),str(oper))
                 cursor.close()
                 return decodeStatus(0)
             else:
@@ -1299,7 +1299,7 @@ def delCollAct():
                 try:
                     cursor.execute(sql)
                     conn.commit()
-                    s.delete("coll_act"+str(act_id),str(oper))
+                    r.delete("coll_act"+str(act_id),str(oper))
                 except Exception as de:
                     app.logger.debug(str(de))
                     conn.rollback()
@@ -1617,6 +1617,7 @@ def DelCommRec():
                     try:
                         cursor.execute(sql)
                         conn.commit()
+                        r.delete("comm_rec"+str(comm_rec_id),str(r.get(token)))
                     except Exception as e:
                         app.logger.debug(str(e))
                         conn.rollback()
