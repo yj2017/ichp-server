@@ -2289,7 +2289,7 @@ def recommendAll():
                                     # r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
                                 app.logger.debug(activity)
                 if count==0:
-                    activity=Activity(acts[cursor_act.rowcount-1][0],acts[cursor_act.rowcount-1][1],acts[cursor_act.rowcount-1][2],acts[cncursor_act.rowcount-1][3],acts[cursor_act.rowcount-1][4],acts[cursor_act.rowcount-1][5],acts[cursor_act.rowcount-1][6],acts[cursor_act.rowcount-1][7],acts[cursor_act.rowcount-1][8],acts[cursor_act.rowcount-1][9])     
+                    activity=Activity(acts[cursor_act.rowcount-1][0],acts[cursor_act.rowcount-1][1],acts[cursor_act.rowcount-1][2],acts[cursor_act.rowcount-1][3],acts[cursor_act.rowcount-1][4],acts[cursor_act.rowcount-1][5],acts[cursor_act.rowcount-1][6],acts[cursor_act.rowcount-1][7],acts[cursor_act.rowcount-1][8],acts[cursor_act.rowcount-1][9])     
                     actL.append(activity)
             dic={}
             dic["rec"]=recL
