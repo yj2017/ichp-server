@@ -2253,15 +2253,16 @@ def recommendAll():
                 keys=list(score_dic.keys())
                 for item in keys:
                     for cnt in range(cursor.rowcount):
-                        if len(recL)<3:
+                        if len(recL)>2:
                             if int(recs[cnt][0])==int(item):
                                 record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
                                 if not r.sismember("recommend_rec"+str(r.get(token)),str(recs[cnt][0])):
                                     recL.append(record)
-                                # r.sadd("recommend_rec"+str(r.get(token)),str(recs[cnt][0]))
                                 app.logger.debug(record)
                         else:
-                            break        
+                             if int(recs[cnt][0])==int(item):
+                                record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
+                                recL.append(record)      
             cursor_act.execute(sql_act)
             acts=cursor_act.fetchall()
             actL=[]
@@ -2276,7 +2277,7 @@ def recommendAll():
                 keys_act=list(score_act.keys())
                 for item in keys_act:
                     for cnt in range(cursor_act.rowcount):
-                        if len(actL)<3:
+                        if len(actL)>2:
                             if int(acts[cnt][0])==int(item):
                                 activity=Activity(acts[cnt][0],acts[cnt][1],acts[cnt][2],acts[cnt][3],acts[cnt][4],acts[cnt][5],acts[cnt][6],acts[cnt][7],acts[cnt][8],acts[cnt][9])
                                 if not r.sismember("recommend_act"+str(r.get(token)),str(acts[cnt][0])):
@@ -2284,7 +2285,10 @@ def recommendAll():
                                     # r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
                                 app.logger.debug(activity)
                         else:
-                            break 
+                            if int(acts[cnt][0])==int(item):
+                                activity=Activity(acts[cnt][0],acts[cnt][1],acts[cnt][2],acts[cnt][3],acts[cnt][4],acts[cnt][5],acts[cnt][6],acts[cnt][7],acts[cnt][8],acts[cnt][9])
+                                actL.append(activity)
+
             dic={}
             dic["rec"]=recL
             dic["act"]=actL   
