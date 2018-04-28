@@ -1950,7 +1950,7 @@ def recommendRec():
                             rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
                                          allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
                             recordL.append(rec)
-                            # r.sadd("recommend_rec"+str(r.get(token)),str(allUser_record[k][0]))
+                            r.sadd("recommend_rec"+str(r.get(token)),str(allUser_record[k][0]))
                     else:
                         cursor.close()
                         return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
