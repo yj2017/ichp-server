@@ -419,9 +419,9 @@ def SearchEntry():
                     entry = Entry(listEnt[row][0], listEnt[row]
                                   [1], listEnt[row][2], listEnt[row][3], listEnt[row][4])
                     if r.sismember("coll_entry"+str(entry.entry_id),str(r.get(token))):
-                        entry_temp.isColl=True
+                        entry.isColl=True
                     else:
-                        entry_temp.isColl=False
+                        entry.isColl=False
                     entL.append(entry)
                     app.logger.debug(entL)
             cursor.close()
