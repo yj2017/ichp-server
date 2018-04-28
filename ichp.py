@@ -2262,7 +2262,7 @@ def recommendAll():
                                 record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
                                 recL.append(record)    
             if count==0:    
-                record=Record(recs[cursor.rowcount-1][0],recs[cursor.rowcount-1][1],recs[cursor.rowcount-1][2],recs[cursor.rowcount-1][3],recs[cursor.rowcount-1][4],recs[cursor.rowcount-1][5],recs[cursor.rowcount-1][6],recs[cursor.rowcount-1][7],recs[cursor.rowcount-1][8],recs[ccursor.rowcount-1][9],recs[cncursor.rowcount-1][10])
+                record=Record(recs[cursor.rowcount-1][0],recs[cursor.rowcount-1][1],recs[cursor.rowcount-1][2],recs[cursor.rowcount-1][3],recs[cursor.rowcount-1][4],recs[cursor.rowcount-1][5],recs[cursor.rowcount-1][6],recs[cursor.rowcount-1][7],recs[cursor.rowcount-1][8],recs[cursor.rowcount-1][9],recs[cursor.rowcount-1][10])
                 recL.append(record)
             cursor_act.execute(sql_act)
             acts=cursor_act.fetchall()
@@ -2289,8 +2289,8 @@ def recommendAll():
                                     # r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
                                 app.logger.debug(activity)
                 if count==0:
-                activity=Activity(acts[cncursor_act.rowcount-1][0],acts[cncursor_act.rowcount-1][1],acts[ccncursor_act.rowcount-1][2],acts[cncncursor_act.rowcount-1][3],acts[cncursor_act.rowcount-1][4],acts[cncncursor_act.rowcount-1][5],acts[cncursor_act.rowcount-1][6],acts[cncursor_act.rowcount-1][7],acts[cncursor_act.rowcount-1][8],acts[cncursor_act.rowcount-1][9])     
-                actL.append(activity)
+                    activity=Activity(acts[cursor_act.rowcount-1][0],acts[cursor_act.rowcount-1][1],acts[cursor_act.rowcount-1][2],acts[cncursor_act.rowcount-1][3],acts[cursor_act.rowcount-1][4],acts[cursor_act.rowcount-1][5],acts[cursor_act.rowcount-1][6],acts[cursor_act.rowcount-1][7],acts[cursor_act.rowcount-1][8],acts[cursor_act.rowcount-1][9])     
+                    actL.append(activity)
             dic={}
             dic["rec"]=recL
             dic["act"]=actL   
