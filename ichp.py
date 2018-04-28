@@ -653,6 +653,10 @@ def DelRec():
                             sql4 = 'delete from comm_rec where rec_id=%d' % (
                                 rec_id)
                             cursor.execute(sql4)
+                    sql_coll='delete from coll_record where rec_id=%d'%(
+                                rec_id,)
+                    cursor.execute(sql_coll)
+                    conn.commit()
                     sql = 'delete from record where rec_id=%d' % (rec_id,)
                     cursor.execute(sql)
                     conn.commit()
@@ -1071,20 +1075,23 @@ def DelAct():
             cursor.execute(sql_temp)
             publisher = cursor.fetchall()
             if oper == publisher[0][0]:
+                sql_coll='delete from coll_activity where act_id=%d'%(
+                                act_id,)
+                cursor.execute(sql_coll)
+                conn.commit()
                 sql = 'delete from activity where act_id=%d' % (act_id,)
                 try:
                     cursor.execute(sql)
                     conn.commit()
                     r.delete("act"+str(act_id),str(oper))
                     r.delete("coll_act"+str(act_id),str(oper))
+                    cursor.close()
+                    return decodeStatus(0)
                 except Exception as de:
                     app.logger.debug(str(de))
                     conn.rollback()
                     cursor.close()
                     return decodeStatus(27)
-                else:
-                    cursor.close()
-                    return decodeStatus(0)
             else:
                 cursor.close()
                 return decodeStatus(15)  # 不是发布者删除
@@ -1233,11 +1240,10 @@ def getCollAct():
         try:
             cursor.execute(
                 'select act_id from coll_activity where collector= %s ;', (int(oper),))
-            act_ids = cursor.fetchall()
             actL = []
-            rowCount = cursor.rowcount
-            if rowCount > 0:
-                for i in range(rowCount):
+            act_ids = cursor.fetchall()
+            if cursor.rowcount > 0:
+                for i in range(cursor.rowcount):
                     sql='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%d ' %(int(act_ids[i][0],))
                     cursor.execute(sql)
                     act= cursor.fetchall()
