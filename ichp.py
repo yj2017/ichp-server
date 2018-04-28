@@ -886,21 +886,18 @@ def DelCollRec():
     rec_id = int(req['rec_id'])
     if r.exists(token):
         oper = int(r.get(token))
-        sql_temp = 'select collector from coll_record where rec_id=%d' % (
-                rec_id,)
+        sql_temp = 'select collector from coll_record where rec_id=%d and collector=%d' % (
+                rec_id,oper)
         try:
             cursor.execute(sql_temp)
-            recorder = cursor.fetchall()
-            if oper == recorder[0][0]:
-                sql = 'delete from coll_record where rec_id=%d' % (rec_id,)
+            cursor.fetchall()
+            if cursor.rowcount>0:
+                sql = 'delete from coll_record where rec_id=%d and collector=%d' % (rec_id,oper)
                 cursor.execute(sql)
                 conn.commit()
                 r.delete("coll_rec"+str(rec_id),str(oper))
-                cursor.close()
-                return decodeStatus(0)
-            else:
-                cursor.close()
-                return decodeStatus(15)  # 不是发布者删除record
+            cursor.close()
+            return decodeStatus(0)
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
@@ -1301,35 +1298,23 @@ def delCollAct():
     token = req['token']
     act_id = int(req['act_id'])
     if r.exists(token):
-        sql_isExist = 'select * from coll_activity where act_id=%d' % (act_id,)
-        cursor.execute(sql_isExist)
-        cursor.fetchall()
-        if cursor.rowcount > 0:
-            oper = int(r.get(token))
-            sql_temp = 'select collector from coll_activity where act_id=%d' % (
-                act_id,)
-            cursor.execute(sql_temp)
-            publisher = cursor.fetchall()
-            if oper == publisher[0][0]:
-                sql = 'delete from coll_activity where act_id=%d' % (act_id,)
-                try:
-                    cursor.execute(sql)
-                    conn.commit()
-                    r.delete("coll_act"+str(act_id),str(oper))
-                except Exception as de:
-                    app.logger.debug(str(de))
-                    conn.rollback()
-                    cursor.close()
-                    return decodeStatus(27)
-                else:
-                    cursor.close()
-                    return decodeStatus(0)
-            else:
-                cursor.close()
-                return decodeStatus(15)  # 不是发布者删除
-        else:
+        oper = int(r.get(token))
+        sql_isExist = 'select * from coll_activity where act_id=%d  and collector =%d' % (act_id,oper)
+        try:
+            cursor.execute(sql_isExist)
+            cursor.fetchall()
+            if cursor.rowcount > 0:
+                sql = 'delete from coll_activity where act_id=%d and collector=%d'  % (act_id,int(r.get(token)))
+                cursor.execute(sql)
+                conn.commit()
+                r.delete("coll_act"+str(act_id),str(oper))
             cursor.close()
-            return decodeStatus(22)
+            return decodeStatus(0)
+        except Exception as de:
+            app.logger.debug(str(de))
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(27)
     else:
         cursor.close()
         return decodeStatus(8)
