@@ -1949,9 +1949,8 @@ def recommendRec():
                         if allUser_record[k][0] == keys[cnt]:
                             rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
                                          allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
-                            if not r.sismember("recommend_rec"+str(r.get(token)),str(allUser_record[k][0])):
-                                recordL.append(rec)
-                                r.sadd("recommend_rec"+str(r.get(token)),str(allUser_record[k][0]))
+                            recordL.append(rec)
+                            # r.sadd("recommend_rec"+str(r.get(token)),str(allUser_record[k][0]))
                     else:
                         cursor.close()
                         return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -2039,9 +2038,9 @@ def recommendAct():
                         if allUser_act[k][0] == keys[cnt]:
                             act = Activity(allUser_act[k][0], allUser_act[k][1], allUser_act[k][2], allUser_act[k][3], allUser_act[k][4],
                                            allUser_act[k][5], allUser_act[k][6], allUser_act[k][7], allUser_act[k][8], allUser_act[k][9])
-                            if not r.sismember("recommend_act"+str(r.get(token)),str(allUser_act[k][0])):
-                                recordL.append(act)
-                                r.sadd("recommend_act"+str(r.get(token)),str(allUser_act[k][0]))
+                            # if not r.sismember("recommend_act"+str(r.get(token)),str(allUser_act[k][0])):
+                            recordL.append(act)
+                            r.sadd("recommend_act"+str(r.get(token)),str(allUser_act[k][0]))
                     else:
                         cursor.close()
                         return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -2259,7 +2258,7 @@ def recommendAll():
                                 record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
                                 if not r.sismember("recommend_rec"+str(r.get(token)),str(recs[cnt][0])):
                                     recL.append(record)
-                                    r.sadd("recommend_rec"+str(r.get(token)),str(recs[cnt][0]))
+                                # r.sadd("recommend_rec"+str(r.get(token)),str(recs[cnt][0]))
                                 app.logger.debug(record)
                         else:
                             break        
@@ -2282,7 +2281,7 @@ def recommendAll():
                                 activity=Activity(acts[cnt][0],acts[cnt][1],acts[cnt][2],acts[cnt][3],acts[cnt][4],acts[cnt][5],acts[cnt][6],acts[cnt][7],acts[cnt][8],acts[cnt][9])
                                 if not r.sismember("recommend_act"+str(r.get(token)),str(acts[cnt][0])):
                                     actL.append(activity)
-                                    r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
+                                    # r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
                                 app.logger.debug(activity)
                         else:
                             break 
