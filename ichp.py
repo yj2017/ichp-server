@@ -1238,9 +1238,9 @@ def getCollAct():
             rowCount = cursor.rowcount
             if rowCount > 0:
                 for i in range(rowCount):
-                    cursor.execute(
-                        'select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%s;', (act_ids[i][0],))
-                    act = cursor.fetchall()
+                    sql='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where act_id=%d ' %(int(act_ids[i][0],))
+                    cursor.execute(sql)
+                    act= cursor.fetchall()
                     activity = Activity(act[0][0],
                                         act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
                     if r.sismember("coll_act"+str(act[0][0]),oper):
