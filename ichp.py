@@ -375,8 +375,9 @@ def modifyEntry():
     if r.exists(token):
         editor = int(r.get(token))
         content = req['content']
-        sql = 'update entry set content="%s",editor=%d where entry_id=%d' % (
-            content, editor, entry_id)
+        url=req['url']
+        sql = 'update entry set url="%s", content="%s",editor=%d where entry_id=%d' % (
+            url,content, editor, entry_id)
         try:
             cursor.execute(sql)
             oper = int(r.get(token))
@@ -417,6 +418,10 @@ def SearchEntry():
                 for row in range(cursor.rowcount):
                     entry = Entry(listEnt[row][0], listEnt[row]
                                   [1], listEnt[row][2], listEnt[row][3], listEnt[row][4])
+                    if r.sismember("coll_entry"+str(entry.entry_id),str(r.get(token))):
+                        entry_temp.isColl=True
+                    else:
+                        entry_temp.isColl=False
                     entL.append(entry)
                     app.logger.debug(entL)
             cursor.close()
@@ -697,8 +702,10 @@ def ModifyRecord():
         recorder = cursor.fetchall()
         if oper == recorder[0][0]:
             discribe = req['discribe']
-            sql = 'update record set discribe="%s" where rec_id=%d' % (
-                discribe, rec_id)
+            url=req['url']
+            labels_id_str=req['labels_id_str']
+            sql = 'update record set url="%s",labels_id_str="%s", discribe="%s" where rec_id=%d' % (
+                url,labels_id_str,discribe, rec_id)
             try:
                 cursor.execute(sql)
                 conn.commit()
@@ -1052,6 +1059,44 @@ def IssueAct():
         cursor.close()
         return decodeStatus(8)
 
+
+
+@app.route('/modifyAct',methods=["POST"])
+def modifyAct():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    act_id = int(req['act_id'])
+    token = req['token']
+    if r.exists(token):
+        oper = int(r.get(token))
+        sql_temp = 'select publisher from activity where act_id=%d' % (act_id,)
+        cursor.execute(sql_temp)
+        publisher = cursor.fetchall()
+        if oper == publisher[0][0]:
+            content = req['content']
+            image_src=req['image_src']
+            labels_id_str=req['labels_id_str']
+            hold_addr=req['hold_addr']
+            hold_date=req['hold_date']
+            act_src=req['act_src']
+            sql = 'update activity set image_src="%s",labels_id_str="%s",content="%s",hold_addr="%s",hold_date="%s",act_src="%s" where act_id=%d' % (
+                image_src,labels_id_str,content, hold_addr,hold_date,act_src,act_id)
+            try:
+                cursor.execute(sql)
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
+            except Exception as de:
+                app.logger.debug(str(de))
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(29)     
+        else:
+            cursor.close()
+            return decodeStatus(15)
+    else:
+        cursor.close()
+        return decodeStatus(8)
 # delete activity
 
 
@@ -1318,6 +1363,9 @@ def delCollAct():
     else:
         cursor.close()
         return decodeStatus(8)
+
+
+
 
 # search user information
 
