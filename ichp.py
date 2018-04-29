@@ -697,17 +697,15 @@ def ModifyRecord():
     token = req['token']
     if r.exists(token):
         oper = int(r.get(token))
-        sql_temp = 'select recorder from record where rec_id=%d' % (rec_id,)
-        cursor.execute(sql_temp)
+        cursor.execute('select recorder from record where rec_id=%s' ,(rec_id,))
         recorder = cursor.fetchall()
         if oper == recorder[0][0]:
             discribe = req['discribe']
             url=req['url']
             labels_id_str=req['labels_id_str']
-            sql = 'update record set url="%s",labels_id_str="%s", discribe="%s" where rec_id=%d' % (
-                url,labels_id_str,discribe, rec_id)
             try:
-                cursor.execute(sql)
+                cursor.execute('update record set url="%s",labels_id_str="%s", discribe="%s" where rec_id=%s' , (
+                url,labels_id_str,discribe, rec_id))
                 conn.commit()
             except Exception as de:
                 app.logger.debug(str(de))
