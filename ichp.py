@@ -204,10 +204,9 @@ def StoreInfo():
         cursor.close()
         return decodeStatus(8)
     else:
-        sql = 'update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%d' % (
-            telephone, name, sign, image_src, user_id)
         try:
-            cursor.execute(sql)
+            cursor.execute('update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%s' , (
+            telephone, name, sign, image_src, user_id))
             sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
                 user_id,)
             cursor.execute(sql)
@@ -233,10 +232,9 @@ def ModifyImage():
         cursor.close()
         return decodeStatus(8)
     else:
-        sql = 'update user set image_src="%s" where user_id=%d' % (
-            image_src, user_id)
         try:
-            cursor.execute(sql)
+            cursor.execute('update user set image_src=%s where user_id=%s' , (
+            image_src, user_id))
             conn.commit()
         except:
             conn.rollback()
@@ -260,10 +258,9 @@ def ModifySign():
         cursor.close()
         return decodeStatus(8)
     else:
-        sql = 'update user set sign="%s" where user_id=%d' % (
-            sign, user_id)
         try:
-            cursor.execute(sql)
+            cursor.execute( 'update user set sign=%s where user_id=%s' ,(
+            sign, user_id))
             conn.commit()
         except:
             conn.rollback()
@@ -376,14 +373,12 @@ def modifyEntry():
         editor = int(r.get(token))
         content = req['content']
         url=req['url']
-        sql = 'update entry set url="%s", content="%s",editor=%d where entry_id=%d' % (
-            url,content, editor, entry_id)
         try:
-            cursor.execute(sql)
-            oper = int(r.get(token))
-            sql = 'update user set acc_point=acc_point+10 where user_id=%d' % (
-                oper,)
-            cursor.execute(sql)
+            cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' % (
+            url,content, editor, entry_id))
+            oper = int(r.get(token)) 
+            cursor.execute('update user set acc_point=acc_point+10 where user_id=%s' , (
+                oper,))
             conn.commit()
         except Exception as de:
             app.logger.debug(str(de))
@@ -704,7 +699,7 @@ def ModifyRecord():
             url=req['url']
             labels_id_str=req['labels_id_str']
             try:
-                cursor.execute('update record set url="%s",labels_id_str="%s", discribe="%s" where rec_id=%s' , (
+                cursor.execute('update record set url=%s,labels_id_str=%s, discribe=%s where rec_id=%s' , (
                 url,labels_id_str,discribe, rec_id))
                 conn.commit()
             except Exception as de:
@@ -1067,8 +1062,7 @@ def modifyAct():
     token = req['token']
     if r.exists(token):
         oper = int(r.get(token))
-        sql_temp = 'select publisher from activity where act_id=%d' % (act_id,)
-        cursor.execute(sql_temp)
+        cursor.execute('select publisher from activity where act_id=%s' ,(act_id,))
         publisher = cursor.fetchall()
         if oper == publisher[0][0]:
             content = req['content']
@@ -1077,10 +1071,9 @@ def modifyAct():
             hold_addr=req['hold_addr']
             hold_date=req['hold_date']
             act_src=req['act_src']
-            sql = 'update activity set image_src="%s",labels_id_str="%s",content="%s",hold_addr="%s",hold_date="%s",act_src="%s" where act_id=%d' % (
-                image_src,labels_id_str,content, hold_addr,hold_date,act_src,act_id)
             try:
-                cursor.execute(sql)
+                cursor.execute('update activity set image_src=%s,labels_id_str=%s,content=%s,hold_addr=%s,hold_date=%s,act_src=%s where act_id=%s' , (
+                image_src,labels_id_str,content, hold_addr,hold_date,act_src,act_id))
                 conn.commit()
                 cursor.close()
                 return decodeStatus(0)
@@ -2108,10 +2101,9 @@ def ModifyEntryBg():
         cursor.close()
         return decodeStatus(8)
     else:
-        sql = 'update entry set url="%s" where entry_id=%d' % (
-            url, entry_id)
         try:
-            cursor.execute(sql)
+            cursor.execute('update entry set url=%s where entry_id=%s' ,(
+            url, entry_id))
             conn.commit()
         except:
             conn.rollback()
