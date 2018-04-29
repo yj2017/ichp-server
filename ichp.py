@@ -94,7 +94,9 @@ status = {0: 'successfully',
           50:'cancel concern failed',
           51:'get point failed',
           52:'recommend all failed',
-          53:'get concern user  records acts failed'
+          53:'get concern user  records acts failed',
+          54:'certify failed',
+          55:'you do not reach the level'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -108,7 +110,8 @@ conn = mysql.connector.connect(
 w_appr=0.2
 w_coll=0.3
 w_comm=0.5
-
+lv1=100
+lv2=200
 def decodeStatus(code):
     return json.dumps({"msg": status[code], "code": code})
 
@@ -340,22 +343,29 @@ def AddEntry():
             cursor.close()
             return decodeStatus(14)
         else:
-            sql = 'insert into entry (name,content,editor,url) values (%s,%s,%s,%s)'
-            try:
-                cursor.execute(sql, [name, content, editor, url])
-                oper = int(r.get(token))
-                sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
-                    oper,)
-                cursor.execute(sql)
-                conn.commit()
-            except Exception as de:
-                app.logger.debug(str(de))
-                conn.rollback()
+            cursor.execute('select acc_point from user where user_id=%s',(int(r.get(token)),))
+            acc=cursor.fetchall()
+            acc_point=acc[0][0]
+            if acc_point>=lv1:
+                sql = 'insert into entry (name,content,editor,url) values (%s,%s,%s,%s)'
+                try:
+                    cursor.execute(sql, [name, content, editor, url])
+                    oper = int(r.get(token))
+                    sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
+                        oper,)
+                    cursor.execute(sql)
+                    conn.commit()
+                except Exception as de:
+                    app.logger.debug(str(de))
+                    conn.rollback()
+                    cursor.close()
+                    return decodeStatus(6)
+                else:
+                    cursor.close()
+                    return decodeStatus(0)
+            else :
                 cursor.close()
-                return decodeStatus(6)
-            else:
-                cursor.close()
-                return decodeStatus(0)
+                return decodeStatus(55)
     else:
         cursor.close()
         return decodeStatus(8)
@@ -374,20 +384,26 @@ def modifyEntry():
         content = req['content']
         url=req['url']
         try:
-            cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' % (
-            url,content, editor, entry_id))
-            oper = int(r.get(token)) 
-            cursor.execute('update user set acc_point=acc_point+10 where user_id=%s' , (
-                oper,))
-            conn.commit()
+            cursor.execut('select acc_point from user where user_id=%s',int(r.get(token)),)
+            acc=cursor.fetchall()
+            acc_point=acc[0][0]
+            if acc_point>=lv2:
+                cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' % (
+                url,content, editor, entry_id))
+                oper = int(r.get(token)) 
+                cursor.execute('update user set acc_point=acc_point+10 where user_id=%s' , (
+                    oper,))
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
+            else:
+                cursor.close()
+                return decodeStatus(55)
         except Exception as de:
             app.logger.debug(str(de))
             conn.rollback()
             cursor.close()
-            return decodeStatus(9)
-        else:
-            cursor.close()
-            return decodeStatus(0)
+            return decodeStatus(9)    
     else:
         cursor.close()
         return decodeStatus(8)
@@ -2348,7 +2364,7 @@ def getPoint():
         sql_p='select acc_point from user where user_id=%d'%(user_id,)
         sql_rec='select count(*) from record where recorder=%d'%(user_id,)
         sql_entry='select count(*) from entry where editor=%d'%(user_id,)
-        sql_act='select count(*) from activity where publisher=%d'%(user_id,)
+        # sql_act='select count(*) from activity where publisher=%d'%(user_id,)
         sql_commComm='select count(*) from comm_comm where commer=%d'%(user_id,)
         sql_commRec='select count(*) from comm_rec where commer=%d'%(user_id,)
         sql_collRec='select count(*) from coll_record where collector=%d'%(user_id,)
@@ -2366,10 +2382,10 @@ def getPoint():
             cursor.execute(sql_entry)
             entryN=cursor.fetchall()
             cursor.close()
-            cursor=conn.cursor()
-            cursor.execute(sql_act)
-            actN=cursor.fetchall()
-            cursor.close()
+            # cursor=conn.cursor()
+            # cursor.execute(sql_act)
+            # actN=cursor.fetchall()
+            # cursor.close()
             cursor=conn.cursor()
             cursor.execute(sql_commComm)
             commCommN=cursor.fetchall()
@@ -2392,8 +2408,8 @@ def getPoint():
             cursor.close()
             collN=collRecN[0][0]+collActN[0][0]+collEntryN[0][0]
             commN=commRecN[0][0]+commCommN[0][0]
-            apprN=point[0][0]-commRecN[0][0]-commCommN[0][0]-actN[0][0]-entryN[0][0]-recN[0][0]-collN
-            p=Point(point[0][0],commN,actN[0][0],entryN[0][0],recN[0][0],apprN,collN)
+            apprN=point[0][0]-commRecN[0][0]-commCommN[0][0]-entryN[0][0]-recN[0][0]-collN
+            p=Point(point[0][0],commN,entryN[0][0],recN[0][0],apprN,collN)
             return json.dumps({"msg":"successfully","code":0,"data":p}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
@@ -2452,5 +2468,25 @@ def getPayAll():
         cursor_act.close()
         cursor_rec.close()
         return decodeStatus(8)
+
+@app.route('/certify',methods=["POST"])
+def certify():
+    cursor=conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        try:
+            cursor.execute('update user set role=1')
+            conn.commit()
+            cursor.close()
+            return decodeStatus(0)
+        except Exception as de:
+            conn.rollback()
+            cursor.close()
+            return decodeStatus(54)            
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
