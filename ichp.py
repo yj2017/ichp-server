@@ -121,8 +121,8 @@ def Register():
     req = request.get_json(force=True)
     username = req['username']  # account_name账号名
     psw = req['psw']
-    role = int(req['role'])
-    if username == ''or psw == '' or role == '':
+    # role = int(req['role'])
+    if username == ''or psw == '' :
         cursor.close()
         return decodeStatus(3)
     else:
@@ -133,8 +133,8 @@ def Register():
             cursor.close()
             return decodeStatus(4)
         else:
-            sql = 'insert into user (account_name,psw,role) values ("%s","%s",%d)' % (
-                username, psw, role)
+            sql = 'insert into user (account_name,psw) values ("%s","%s")' % (
+                username, psw)
             try:
                 cursor.execute(sql)
                 conn.commit()
@@ -167,7 +167,7 @@ def Login():
         return decodeStatus(2)
     else:
         cursor.execute(
-            'select psw,user_id from user where account_name="%s"' % (username,))
+            'select psw,user_id,role from user where account_name="%s"' % (username,))
         psw_id = cursor.fetchall()
         if cursor.rowcount >= 1:
             app.logger.debug(psw_id[0][0]+"*")
@@ -180,7 +180,7 @@ def Login():
                 # key-value is stored by redis,3600s后过期
                 r.set(the_uuid, user_id, ex=3600*24)
                 cursor.close()
-                return json.dumps({"msg": "login successfully", "token": str(the_uuid), "uid": user_id, "code": 0})
+                return json.dumps({"msg": "login successfully", "token": str(the_uuid), "uid": user_id, "code": 0,"data":str(psw_id[0][2])},default=lambda obj: obj.__dict__, ensure_ascii=False)
             else:
                 cursor.close()
                 return decodeStatus(1)
@@ -207,7 +207,7 @@ def StoreInfo():
         try:
             cursor.execute('update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%s' , (
             telephone, name, sign, image_src, user_id))
-            sql = 'update user set acc_point=acc_point+100 where user_id=%d' % (
+            sql = 'update user set acc_point=acc_point+0 where user_id=%d' % (
                 user_id,)
             cursor.execute(sql)
             conn.commit()
@@ -2243,8 +2243,8 @@ def getEntryAct():
             actL = []
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
-                    activity = Activity(act[0][0],
-                                        act[0][1], act[0][2], act[0][3], act[0][4], act[0][5], act[0][6], act[0][7], act[0][8], act[0][9])
+                    activity = Activity(act[row][0],
+                                        act[row][1], act[row][2], act[row][3], act[row][4], act[row][5], act[row][6], act[row][7], act[row][8], act[row][9])
                     actL.append(activity)
                     app.logger.debug(actL)
             cursor.close()
