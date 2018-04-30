@@ -96,7 +96,9 @@ status = {0: 'successfully',
           52:'recommend all failed',
           53:'get concern user  records acts failed',
           54:'certify failed',
-          55:'you do not reach the level'
+          55:'you do not reach the level',
+          56:'you can not set the same password as before',
+          57:'modify password failed'
           }
 # redis
 pool = redis.ConnectionPool(
@@ -2487,6 +2489,35 @@ def certify():
     else:
         cursor.close()
         return decodeStatus(8)
+
+@app.route('/modifyPsw',methods=["POST"])
+def modifyPsw():
+    cursor = conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    psw = str(req['psw'])
+    if r.exists(token):
+        user_id=int(r.get(token))
+        cursor.execute(
+            'select psw from user where user_id=%s' , (user_id,))
+        psw_id = cursor.fetchall()
+        if psw == psw_id[0][0]:
+            cursor.close()
+            return decodeStatus(56)
+        else:
+            try:
+                cursor.execute('update user set psw=%s where user_id=%s',(psw,user_id))
+                conn.commit()
+                cursor.close()
+                return decodeStatus(0)
+            except Exception as de:
+                conn.rollback()
+                cursor.close()
+                return decodeStatus(57)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
