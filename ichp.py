@@ -208,19 +208,19 @@ def StoreInfo():
         return decodeStatus(8)
     else:
         try:
-            cursor.execute('update user set telephone="%s",name="%s",sign="%s" ,image_src="%s" where user_id=%s' , (
+            cursor.execute('update user set telephone=%s,name=%s,sign=%s ,image_src=%s where user_id=%s' , (
             telephone, name, sign, image_src, user_id))
-            sql = 'update user set acc_point=acc_point+0 where user_id=%d' % (
-                user_id,)
-            cursor.execute(sql)
+            # sql = 'update user set acc_point=acc_point+0 where user_id=%d' % (
+            #     user_id,)
+            # cursor.execute(sql)
             conn.commit()
+            cursor.close()
+            return decodeStatus(0)
         except:
             conn.rollback()
             cursor.close()
             return decodeStatus(10)
-        if cursor.rowcount > 0:
-            cursor.close()
-            return decodeStatus(0)
+           
 
 
 # modify user 's image
@@ -384,7 +384,7 @@ def modifyEntry():
         content = req['content']
         url=req['url']
         try:
-            cursor.execut('select acc_point from user where user_id=%s',int(r.get(token)),)
+            cursor.execute('select acc_point from user where user_id=%s',int(r.get(token)),)
             acc=cursor.fetchall()
             acc_point=acc[0][0]
             if acc_point>=lv2:
