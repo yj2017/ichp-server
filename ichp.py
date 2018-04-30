@@ -1595,7 +1595,7 @@ def CommRec():
                 oper,)
             cursor.execute(sql)
             conn.commit()
-            sql2='update record set comm_num=com_num+1 where rec_id=%d '%(rec_id,)
+            sql2='update record set comm_num=comm_num+1 where rec_id=%d '%(rec_id,)
             cursor.execute(sql2)
             conn.commit()
         except Exception as de:
