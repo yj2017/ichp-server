@@ -384,11 +384,11 @@ def modifyEntry():
         content = req['content']
         url=req['url']
         try:
-            cursor.execute('select acc_point from user where user_id=%s',int(r.get(token)),)
+            cursor.execute('select acc_point from user where user_id=%s',(int(r.get(token)),))
             acc=cursor.fetchall()
             acc_point=acc[0][0]
             if acc_point>=lv2:
-                cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' % (
+                cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' , (
                 url,content, editor, entry_id))
                 oper = int(r.get(token)) 
                 cursor.execute('update user set acc_point=acc_point+10 where user_id=%s' , (
