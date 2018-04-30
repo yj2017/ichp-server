@@ -130,13 +130,13 @@ def Register():
         return decodeStatus(3)
     else:
         cursor.execute(
-            'select * from user where account_name="%s"' % (username,))
+            'select * from user where account_name=%s' % (username,))
         cursor.fetchall()
         if cursor.rowcount > 0:
             cursor.close()
             return decodeStatus(4)
         else:
-            sql = 'insert into user (account_name,psw) values ("%s","%s")' % (
+            sql = 'insert into user (account_name,psw) values (%s,%s)' % (
                 username, psw)
             try:
                 cursor.execute(sql)
@@ -147,7 +147,7 @@ def Register():
                 return decodeStatus(5)
             if cursor.rowcount > 0:
                 cursor.execute(
-                    'select user_id from user where account_name="%s" and psw="%s"' % (username, psw))
+                    'select user_id from user where account_name=%s and psw=%s' % (username, psw))
                 user_id = cursor.fetchall()[0][0]
                 cursor.close()
                 # return the unique user id
@@ -170,7 +170,7 @@ def Login():
         return decodeStatus(2)
     else:
         cursor.execute(
-            'select psw,user_id,role from user where account_name="%s"' % (username,))
+            'select psw,user_id,role from user where account_name=%s' % (username,))
         psw_id = cursor.fetchall()
         if cursor.rowcount >= 1:
             app.logger.debug(psw_id[0][0]+"*")
@@ -336,7 +336,7 @@ def AddEntry():
         name = req['name']
         content = req['content']
         url = req['url']
-        sql_temp = 'select * from entry where name ="%s"' % (name,)
+        sql_temp = 'select * from entry where name =%s"' % (name,)
         cursor.execute(sql_temp)
         cursor.fetchall()
         if cursor.rowcount > 0:
@@ -1003,7 +1003,7 @@ def modifyRecLab():
         recorder = cursor.fetchall()
         if oper == recorder[0][0]:
             labels_id_str = req['labels_id_str']
-            sql = 'update record set labels_id_str="%s" where rec_id=%d' % (
+            sql = 'update record set labels_id_str=%s where rec_id=%d' % (
                 labels_id_str, rec_id)
             try:
                 cursor.execute(sql)
@@ -1585,7 +1585,7 @@ def CommRec():
     if r.exists(token):
         rec_id = int(req['rec_id'])
         commer = int(r.get(token))
-        sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
+        sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,%s,%d)' % (
             rec_id, commer, content, 0)
         try:
             cursor.execute(sql)
@@ -1768,7 +1768,7 @@ def CommComm():
     content = req['content']
     if r.exists(token):
         commer = int(r.get(token))
-        sql = 'insert into comm_comm (comm_rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
+        sql = 'insert into comm_comm (comm_rec_id,commer,content,appr_num) values (%d,%d,%s,%d)' % (
             comm_rec_id, commer, content, 0)
         try:
             cursor.execute(sql)
