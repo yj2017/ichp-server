@@ -112,8 +112,13 @@ conn = mysql.connector.connect(
 w_appr=0.2
 w_coll=0.3
 w_comm=0.5
-lv1=100
-lv2=200
+lv1Score=100
+lv2Score=200
+commScore=5
+apprScore=1
+collScore=1
+recScore=20
+entryScore=20
 def decodeStatus(code):
     return json.dumps({"msg": status[code], "code": code})
 
@@ -348,7 +353,7 @@ def AddEntry():
             cursor.execute('select acc_point from user where user_id=%s',(int(r.get(token)),))
             acc=cursor.fetchall()
             acc_point=acc[0][0]
-            if acc_point>=lv1:
+            if acc_point>=lv1Score:
                 sql = 'insert into entry (name,content,editor,url) values (%s,%s,%s,%s)'
                 try:
                     cursor.execute(sql, [name, content, editor, url])
@@ -389,7 +394,7 @@ def modifyEntry():
             cursor.execute('select acc_point from user where user_id=%s',(int(r.get(token)),))
             acc=cursor.fetchall()
             acc_point=acc[0][0]
-            if acc_point>=lv2:
+            if acc_point>=lv2Score:
                 cursor.execute('update entry set url=%s, content=%s,editor=%s where entry_id=%s' , (
                 url,content, editor, entry_id))
                 oper = int(r.get(token)) 
@@ -2410,8 +2415,21 @@ def getPoint():
             cursor.close()
             collN=collRecN[0][0]+collActN[0][0]+collEntryN[0][0]
             commN=commRecN[0][0]+commCommN[0][0]
-            apprN=point[0][0]-commRecN[0][0]-commCommN[0][0]-entryN[0][0]-recN[0][0]-collN
-            p=Point(point[0][0],commN,entryN[0][0],recN[0][0],apprN,collN)
+            apprN=point[0][0]-commRecN[0][0]*5-commCommN[0][0]*5-entryN[0][0]*20-recN[0][0]*20-collN
+            if point[0][0]>lv2Score:
+                title="非遗达人"
+                level="lv3"
+                authority="1获得称号 2添加词条 3编辑词条"
+            elif point[0][0]>lv1Score:
+                level="lv2"
+                title="非遗探索家"
+                authority="1获得称号 2添加词条"
+            else:
+                level="lv1"
+                title="非遗爱好者" 
+                authority="1获得称号"     
+            #    point,level,title,apprN,apprP,commN,commP,collN,collP,recN,recP,entryN,entryP,authority
+            p=Point(point[0][0],level,title,apprN,apprN*apprScore,commN,commN*commScore,collN,collN*collScore,recN[0][0],recN[0][0]*recScore,entryN[0][0],entryN[0][0]*entryScore,authority)
             return json.dumps({"msg":"successfully","code":0,"data":p}, default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as e:
             app.logger.debug(str(e))
@@ -2422,52 +2440,37 @@ def getPoint():
         return decodeStatus(8)
 
 
-@app.route('/getPayAll',methods=["POST"])
-def getPayAll():
+@app.route('/getPayRec',methods=["POST"])
+def getPayRec():
     cursor=conn.cursor()
-    cursor_act=conn.cursor()
     cursor_rec=conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql_users='select be_paid_id from  attention_info where pay_id=%d'% (int(r.get(token)))
+        sql_users='select be_paid_id from  attention_info where pay_id=%d'% (int(r.get(token)),)
         try:
-            actL=[]
+            
             recL=[]
             cursor.execute(sql_users)
             users=cursor.fetchall()
             if cursor.rowcount>0:
                 for row in range(cursor.rowcount):
-                    sql_rec='select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder=%d order by issue_date DESC'%(int(users[row][0]),)
-                    cursor_rec.execute(sql_rec)
+                    cursor_rec.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder=%s order by issue_date DESC',(int(users[row][0]),))
                     recs=cursor_rec.fetchall()
                     if cursor_rec.rowcount>0:
                         for cnt in range(cursor_rec.rowcount):
                             record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
                             recL.append(record)
-                sql_act='select act_id,publisher,title,content,hold_date,hold_addr,act_src,issue_date,image_src,labels_id_str from activity where publisher=%d order by issue_date DESC'%(int(users[row][0]),)
-                cursor_act.execute(sql_act)
-                acts=cursor_act.fetchall()
-                if cursor_act.rowcount>0:
-                    for cnt in range(cursor_act.rowcount):
-                        activity=Activity(acts[cnt][0],acts[cnt][1],acts[cnt][2],acts[cnt][3],acts[cnt][4],acts[cnt][5],acts[cnt][6],acts[cnt][7],acts[cnt][8],acts[cnt][9])  
-                        actL.append(activity)
-            dic={}
-            dic["rec"]=recL
-            dic["act"]=actL  
             cursor.close()
-            cursor_act.close()
             cursor_rec.close()
-            return json.dumps({"code":0,"msg":"successfully","data":dic},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code":0,"msg":"successfully","data":recL},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
-            cursor_act.close()
             cursor_rec.close()
             return decodeStatus(53)   
     else:
         cursor.close()
-        cursor_act.close()
         cursor_rec.close()
         return decodeStatus(8)
 
