@@ -170,7 +170,7 @@ def Login():
         return decodeStatus(2)
     else:
         cursor.execute(
-            'select psw,user_id,role from user where account_name=%s' % (username,))
+            'select psw,user_id,role from user where account_name=%s' , (username,))
         psw_id = cursor.fetchall()
         if cursor.rowcount >= 1:
             app.logger.debug(psw_id[0][0]+"*")
