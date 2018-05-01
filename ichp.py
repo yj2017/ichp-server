@@ -2014,8 +2014,17 @@ def recommendRec():
                         if allUser_record[k][0] == keys[cnt]:
                             rec = Record(allUser_record[k][0], allUser_record[k][1], allUser_record[k][2], allUser_record[k][3], allUser_record[k][4],
                                          allUser_record[k][5], allUser_record[k][6], allUser_record[k][7], allUser_record[k][8], allUser_record[k][9], allUser_record[k][10])
+                            if r.sismember("rec"+str(allUser_record[k][0]), oper):
+                                rec.isApprove = True
+                            else:
+                                rec.isApprove = False
+                            if r.sismember("coll_rec"+str(allUser_record[k][0]), oper):
+                                rec.isColl = True
+                            else:
+                                rec.isColl = False
                             recordL.append(rec)
                             r.sadd("recommend_rec"+str(r.get(token)),str(allUser_record[k][0]))
+                            
                     else:
                         cursor.close()
                         return json.dumps({"code": 0, "msg": "successfully", "data": recordL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
@@ -2104,6 +2113,14 @@ def recommendAct():
                             act = Activity(allUser_act[k][0], allUser_act[k][1], allUser_act[k][2], allUser_act[k][3], allUser_act[k][4],
                                            allUser_act[k][5], allUser_act[k][6], allUser_act[k][7], allUser_act[k][8], allUser_act[k][9])
                             # if not r.sismember("recommend_act"+str(r.get(token)),str(allUser_act[k][0])):
+                            if r.sismember("act"+str(allUser_act[k][0]), oper):
+                                act.isApprove = True
+                            else:
+                                act.isApprove = False
+                            if r.sismember("coll_act"+str(allUser_act[k][0]), oper):
+                                act.isColl = True
+                            else:
+                                act.isColl = False
                             recordL.append(act)
                             r.sadd("recommend_act"+str(r.get(token)),str(allUser_act[k][0]))
                     else:
