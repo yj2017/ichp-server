@@ -2347,24 +2347,24 @@ def recommendAll():
                                 count=count+1
                                 record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
                                 if r.sismember("rec"+str(recs[cnt][0]), str(r.get(token))):
-                                    act.isApprove = True
+                                    record.isApprove = True
                                 else:
-                                    act.isApprove = False
+                                    record.isApprove = False
                                 if r.sismember("coll_rec"+str(recs[cnt][0]), str(r.get(token))):
-                                    act.isColl = True
+                                    record.isColl = True
                                 else:
-                                    act.isColl = False
+                                    record.isColl = False
                                 recL.append(record)    
             if count==0:    
                 record=Record(recs[cursor.rowcount-1][0],recs[cursor.rowcount-1][1],recs[cursor.rowcount-1][2],recs[cursor.rowcount-1][3],recs[cursor.rowcount-1][4],recs[cursor.rowcount-1][5],recs[cursor.rowcount-1][6],recs[cursor.rowcount-1][7],recs[cursor.rowcount-1][8],recs[cursor.rowcount-1][9],recs[cursor.rowcount-1][10])
                 if r.sismember("rec"+str(recs[cursor.rowcount-1][0]), str(r.get(token))):
-                    act.isApprove = True
+                    record.isApprove = True
                 else:
-                    act.isApprove = False
+                    record.isApprove = False
                 if r.sismember("coll_rec"+str(recs[cursor.rowcount-1][0]), str(r.get(token))):
-                    act.isColl = True
+                    record.isColl = True
                 else:
-                    act.isColl = False
+                    record.isColl = False
                 recL.append(record)
             cursor_act.execute(sql_act)
             acts=cursor_act.fetchall()
@@ -2401,7 +2401,7 @@ def recommendAll():
                 if count==0:
                     activity=Activity(acts[cursor_act.rowcount-1][0],acts[cursor_act.rowcount-1][1],acts[cursor_act.rowcount-1][2],acts[cursor_act.rowcount-1][3],acts[cursor_act.rowcount-1][4],acts[cursor_act.rowcount-1][5],acts[cursor_act.rowcount-1][6],acts[cursor_act.rowcount-1][7],acts[cursor_act.rowcount-1][8],acts[cursor_act.rowcount-1][9])     
                     if r.sismember("act"+str(acts[cursor_act.rowcount-1][0]), str(r.get(token))):
-                        activty.isApprove = True
+                        activity.isApprove = True
                     else:
                         activity.isApprove = False
                     if r.sismember("coll_act"+str(acts[cursor_act.rowcount-1][0]), str(r.get(token))):
