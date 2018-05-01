@@ -2552,5 +2552,28 @@ def modifyPsw():
         return decodeStatus(8)
 
 
+@app.route('/getLatestRec',methods=["POST"])
+def getLatestRec():
+    cursor=conn.cursor()
+    req = request.get_json(force=True)
+    token = req['token']
+    if r.exists(token):
+        try:
+            recL=[]
+            cursor.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder!=%s order by issue_date DESC',(int(r.get(token)),))
+            recs=cursor.fetchall()
+            if cursor.rowcount>0:
+                for cnt in range(cursor.rowcount):
+                    record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
+                    recL.append(record)
+            cursor.close()
+            return json.dumps({"code":0,"msg":"successfully","data":recL},default=lambda obj: obj.__dict__, ensure_ascii=False) 
+        except Exception as de :
+            cursor.close()
+            return decodeStatus(57)
+    else:
+        cursor.close()
+        return decodeStatus(8)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
