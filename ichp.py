@@ -137,16 +137,15 @@ def Register():
         return decodeStatus(3)
     else:
         cursor.execute(
-            'select * from user where account_name=%s' % (username,))
+            'select * from user where account_name=%s' , (username,))
         cursor.fetchall()
         if cursor.rowcount > 0:
             cursor.close()
             return decodeStatus(4)
         else:
-            sql = 'insert into user (account_name,psw) values (%s,%s)' % (
-                username, psw)
             try:
-                cursor.execute(sql)
+                cursor.execute('insert into user (account_name,psw) values (%s,%s)' , (
+                username, psw))
                 conn.commit()
             except:  # mysql error
                 conn.rollback()
@@ -154,7 +153,7 @@ def Register():
                 return decodeStatus(5)
             if cursor.rowcount > 0:
                 cursor.execute(
-                    'select user_id from user where account_name=%s and psw=%s' % (username, psw))
+                    'select user_id from user where account_name=%s and psw=%s' , (username, psw))
                 user_id = cursor.fetchall()[0][0]
                 cursor.close()
                 # return the unique user id
@@ -343,8 +342,7 @@ def AddEntry():
         name = req['name']
         content = req['content']
         url = req['url']
-        sql_temp = 'select * from entry where name =%s"' % (name,)
-        cursor.execute(sql_temp)
+        cursor.execute('select * from entry where name =%s' , (name,))
         cursor.fetchall()
         if cursor.rowcount > 0:
             cursor.close()
@@ -358,9 +356,8 @@ def AddEntry():
                 try:
                     cursor.execute(sql, [name, content, editor, url])
                     oper = int(r.get(token))
-                    sql = 'update user set acc_point=acc_point+20 where user_id=%d' % (
-                        oper,)
-                    cursor.execute(sql)
+                    cursor.execute('update user set acc_point=acc_point+20 where user_id=%s' , (
+                        oper,))
                     conn.commit()
                 except Exception as de:
                     app.logger.debug(str(de))
