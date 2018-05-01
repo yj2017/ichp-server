@@ -11,5 +11,8 @@ class Record(object):
         self.issue_date = issue_date.timestamp()
         self.discribe = discribe
         self.labels_id_str=labels_id_str
-
+    def __eq__(self,other):
+        return self.rec_id==other.rec_id
+    def __hash__(self):
+        return self.rec_id
 

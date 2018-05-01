@@ -2490,7 +2490,7 @@ def getPayRec():
                             recL.append(record)
             cursor.close()
             cursor_rec.close()
-            return json.dumps({"code":0,"msg":"successfully","data":recL},default=lambda obj: obj.__dict__, ensure_ascii=False)
+            return json.dumps({"code":0,"msg":"successfully","data":list(set(recL))},default=lambda obj: obj.__dict__, ensure_ascii=False)
         except Exception as de:
             app.logger.debug(de)
             cursor.close()
