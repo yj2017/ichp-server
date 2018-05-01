@@ -2447,14 +2447,24 @@ def getPayRec():
     token = req['token']
     if r.exists(token):
         sql_users='select be_paid_id from  attention_info where pay_id=%d'% (int(r.get(token)),)
+        sql_coll='select rec_id from coll_record where collector=%d'% (int(r.get(token)),)
         try:
-            
             recL=[]
             cursor.execute(sql_users)
             users=cursor.fetchall()
             if cursor.rowcount>0:
                 for row in range(cursor.rowcount):
                     cursor_rec.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where recorder=%s order by issue_date DESC',(int(users[row][0]),))
+                    recs=cursor_rec.fetchall()
+                    if cursor_rec.rowcount>0:
+                        for cnt in range(cursor_rec.rowcount):
+                            record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
+                            recL.append(record)
+            cursor.execute(sql_coll)
+            recs=cursor.fetchall()
+            if cursor.rowcount>0:
+                for row in range(cursor.rowcount):
+                    cursor_rec.execute('select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s order by issue_date DESC',(int(recs[row][0]),))
                     recs=cursor_rec.fetchall()
                     if cursor_rec.rowcount>0:
                         for cnt in range(cursor_rec.rowcount):
