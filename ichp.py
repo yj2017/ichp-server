@@ -2346,9 +2346,25 @@ def recommendAll():
                             if int(recs[cnt][0])==int(item):
                                 count=count+1
                                 record=Record(recs[cnt][0],recs[cnt][1],recs[cnt][2],recs[cnt][3],recs[cnt][4],recs[cnt][5],recs[cnt][6],recs[cnt][7],recs[cnt][8],recs[cnt][9],recs[cnt][10])
+                                if r.sismember("rec"+str(recs[cnt][0]), str(r.get(token))):
+                                    act.isApprove = True
+                                else:
+                                    act.isApprove = False
+                                if r.sismember("coll_rec"+str(recs[cnt][0]), str(r.get(token))):
+                                    act.isColl = True
+                                else:
+                                    act.isColl = False
                                 recL.append(record)    
             if count==0:    
                 record=Record(recs[cursor.rowcount-1][0],recs[cursor.rowcount-1][1],recs[cursor.rowcount-1][2],recs[cursor.rowcount-1][3],recs[cursor.rowcount-1][4],recs[cursor.rowcount-1][5],recs[cursor.rowcount-1][6],recs[cursor.rowcount-1][7],recs[cursor.rowcount-1][8],recs[cursor.rowcount-1][9],recs[cursor.rowcount-1][10])
+                if r.sismember("rec"+str(recs[cursor.rowcount-1][0]), str(r.get(token))):
+                    act.isApprove = True
+                else:
+                    act.isApprove = False
+                if r.sismember("coll_rec"+str(recs[cursor.rowcount-1][0]), str(r.get(token))):
+                    act.isColl = True
+                else:
+                    act.isColl = False
                 recL.append(record)
             cursor_act.execute(sql_act)
             acts=cursor_act.fetchall()
@@ -2370,12 +2386,28 @@ def recommendAll():
                         if not r.sismember("recommend_act"+str(r.get(token)),str(acts[cnt][0])):
                             if int(acts[cnt][0])==int(item):
                                 activity=Activity(acts[cnt][0],acts[cnt][1],acts[cnt][2],acts[cnt][3],acts[cnt][4],acts[cnt][5],acts[cnt][6],acts[cnt][7],acts[cnt][8],acts[cnt][9])                                
+                                if r.sismember("act"+str(acts[cnt][0]), str(r.get(token))):
+                                    activty.isApprove = True
+                                else:
+                                    activity.isApprove = False
+                                if r.sismember("coll_act"+str(acts[cnt][0]), str(r.get(token))):
+                                    activity.isColl = True
+                                else:
+                                    activity.isColl = False
                                 actL.append(activity)
                                 count=count+1
                                     # r.sadd("recommend_act"+str(r.get(token)),str(acts[cnt][0]))
                                 app.logger.debug(activity)
                 if count==0:
                     activity=Activity(acts[cursor_act.rowcount-1][0],acts[cursor_act.rowcount-1][1],acts[cursor_act.rowcount-1][2],acts[cursor_act.rowcount-1][3],acts[cursor_act.rowcount-1][4],acts[cursor_act.rowcount-1][5],acts[cursor_act.rowcount-1][6],acts[cursor_act.rowcount-1][7],acts[cursor_act.rowcount-1][8],acts[cursor_act.rowcount-1][9])     
+                    if r.sismember("act"+str(acts[cursor_act.rowcount-1][0]), str(r.get(token))):
+                        activty.isApprove = True
+                    else:
+                        activity.isApprove = False
+                    if r.sismember("coll_act"+str(acts[cursor_act.rowcount-1][0]), str(r.get(token))):
+                        activity.isColl = True
+                    else:
+                        activity.isColl = False
                     actL.append(activity)
             dic={}
             dic["rec"]=recL
