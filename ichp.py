@@ -1592,7 +1592,7 @@ def CommRec():
     if r.exists(token):
         rec_id = int(req['rec_id'])
         commer = int(r.get(token))
-        sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,%s,%d)' % (
+        sql = 'insert into comm_rec (rec_id,commer,content,appr_num) values (%d,%d,"%s",%d)' % (
             rec_id, commer, content, 0)
         try:
             cursor.execute(sql)
@@ -1775,10 +1775,9 @@ def CommComm():
     content = req['content']
     if r.exists(token):
         commer = int(r.get(token))
-        sql = 'insert into comm_comm (comm_rec_id,commer,content,appr_num) values (%d,%d,%s,%d)' % (
-            comm_rec_id, commer, content, 0)
         try:
-            cursor.execute(sql)
+            cursor.execute('insert into comm_comm (comm_rec_id,commer,content,appr_num) values (%s,%s,%s,%s)' , (
+            comm_rec_id, commer, content, 0))
             conn.commit()
             oper = int(r.get(token))
             sql = 'update user set acc_point=acc_point+5 where user_id=%d' % (
