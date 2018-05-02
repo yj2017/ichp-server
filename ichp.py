@@ -2525,11 +2525,11 @@ def getPayRec():
                             fillRec(record,str(r.get(token)))
                             recL.append(record)
             cursor.execute(sql_coll)
-            recs = cursor.fetchall()
+            rec_ids = cursor.fetchall()
             if cursor.rowcount > 0:
                 for row in range(cursor.rowcount):
                     cursor_rec.execute(
-                        'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s order by issue_date DESC', (int(recs[row][0]),))
+                        'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record where rec_id=%s order by issue_date DESC', (int(rec_ids[row][0]),))
                     recs = cursor_rec.fetchall()
                     if cursor_rec.rowcount > 0:
                         for cnt in range(cursor_rec.rowcount):
