@@ -801,7 +801,7 @@ def GetUserRec():
                 for row in range(cursor.rowcount):
                     record = Record(listRec[row][0], recorder, listRec[row][1], listRec[row][2], listRec[row]
                                     [3], listRec[row][4], listRec[row][5], listRec[row][6], listRec[row][7], listRec[row][8], listRec[row][9])
-                    fillRec(record, str(recorder))
+                    fillRec(record, str(r.get(token)))
                     recL.append(record)
                     app.logger.debug(recL)
             cursor.close()
