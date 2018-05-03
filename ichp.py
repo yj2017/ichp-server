@@ -1524,10 +1524,9 @@ def concerUser():
         if user_id == pay_id:
             cursor.close()
             return decodeStatus(49)
-        sql = 'insert into attention_info(pay_id,be_paid_id) values(%d,%d)' % (
-            pay_id, user_id)
         try:
-            cursor.execute(sql)
+            cursor.execute( 'insert into attention_info(pay_id,be_paid_id) values(%s,%s)', (
+            pay_id, user_id))
             conn.commit()
             r.sadd("concern"+str(user_id), str(pay_id))
             cursor.close()
