@@ -1636,23 +1636,24 @@ def CommRec():
 @app.route('/getCommRec', methods=["POST"])
 def GetCommRec():
     cursor = conn.cursor()
+    cursor_rec = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
         oper = str(r.get(token))
         rec_id = int(req['rec_id'])
         commL = []
-        cursor.execute(
-            'select commer from comm_rec where rec_id= %s', (rec_id,))
-        commer = cursor.fetchall()
-        if cursor.rowcount > 0:
-            for count in range(cursor.rowcount):
-                try:
-                    cursor.execute('select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%s and user.user_id=%s' ,(
-                    rec_id, commer[count][0]))
-                    commList = cursor.fetchall()
-                    if cursor.rowcount > 0:
-                        for row in range(cursor.rowcount):
+        try:
+            cursor.execute(
+                'select commer from comm_rec where rec_id= %s', (rec_id,))
+            commer = cursor.fetchall()
+            if cursor.rowcount > 0:
+                for count in range(cursor.rowcount):
+                    cursor_rec.execute('select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%s and comm_rec.commer=%s and user.user_id=%s ' ,(
+                    rec_id, int(commer[count][0]),int(commer[count][0])))
+                    commList = cursor_rec.fetchall()
+                    if cursor_rec.rowcount > 0:
+                        for row in range(cursor_rec.rowcount):
                             commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
                                                 commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
                             if r.sismember("comm_rec"+str(commentRec.comm_rec_id), oper):
@@ -1660,13 +1661,14 @@ def GetCommRec():
                             else:
                                 commentRec.isApprove = False
                             commL.append(commentRec)
-                    cursor.close()
-                    return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-                except Exception as de:
-                    cursor.close()
-                    return decodeStatus(37)
-        cursor.close()
-        return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+            cursor.close()
+            cursor_rec.close()
+            return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+        except Exception as de:
+            cursor_rec.close()
+            cursor.close()
+            return decodeStatus(37)
+
     else:
         cursor.close()
         return decodeStatus(8)
