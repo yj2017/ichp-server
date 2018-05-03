@@ -1440,8 +1440,8 @@ def GetMyConc():
                         payNum = cursor.fetchall()[0][0]
                         user.bePaidNum = r.scard("concern"+str(listUser[0][0]))
                         user.payNum = payNum
-                        r.sadd(
-                            "concern"+str(listUser[0][0]), str(r.get(token)))
+                        # r.sadd(
+                        #     "concern"+str(listUser[0][0]), str(r.get(token)))
                         if r.sismember("concern"+str(listUser[0][0]), str(r.get(token))):
                             user.isConcern = True
                         else:
@@ -1490,8 +1490,8 @@ def getConcMe():
                         payNum = cursor.fetchall()[0][0]
                         user.bePaidNum = r.scard("concern"+str(listUser[0][0]))
                         user.payNum = payNum
-                        r.sadd("concern"+str(r.get(token)),
-                               str(listUser[0][0]))
+                        # r.sadd("concern"+str(r.get(token)),
+                        #        str(listUser[0][0]))
                         if r.sismember("concern"+str(listUser[0][0]), str(r.get(token))):
                             user.isConcern = True
                         else:
