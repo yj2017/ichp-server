@@ -1417,10 +1417,11 @@ def GetMyConc():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
+    user_id=req['user_id']
     if r.exists(token):
-        pay_id = int(r.get(token))  # myself
+        # pay_id = int(r.get(token))  # myself
         sql_temp = 'select be_paid_id from attention_info where pay_id=%d' % (
-            pay_id,)
+            int(user_id),)
         try:
             cursor.execute(sql_temp)
             uidL = cursor.fetchall()
@@ -1466,10 +1467,11 @@ def getConcMe():
     cursor = conn.cursor()
     req = request.get_json(force=True)
     token = req['token']
+    user_id=req['user_id']
     if r.exists(token):
-        be_paid_id = int(r.get(token))  # myself
+        # be_paid_id = int(r.get(token))  # myself
         sql_temp = 'select pay_id from attention_info where be_paid_id=%d' % (
-            be_paid_id,)
+            int(user_id),)
         try:
             cursor.execute(sql_temp)
             uidL = cursor.fetchall()
