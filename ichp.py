@@ -2177,7 +2177,7 @@ def GetUserInfo():
             listUser = cursor.fetchall()
             rowCount = cursor.rowcount
             cursor.execute(
-                'select count(*) from attention_info where pay_id=%s', (int(r.get(token)),))
+                'select count(*) from attention_info where pay_id=%s', (user_id,))
             payNum = cursor.fetchall()[0][0]
             userL = []
             for row in range(rowCount):
