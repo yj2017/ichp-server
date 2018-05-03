@@ -109,9 +109,9 @@ conn = mysql.connector.connect(
     user='ichp', password='273841', database='ichp')
 
 # recommend weight
-w_appr = 0.2
+w_appr = 0.3
 w_coll = 0.3
-w_comm = 0.5
+w_comm = 0.4
 lv1Score = 100
 lv2Score = 200
 commScore = 5
@@ -1646,25 +1646,25 @@ def GetCommRec():
             'select commer from comm_rec where rec_id= %s', (rec_id,))
         commer = cursor.fetchall()
         if cursor.rowcount > 0:
-            sql = 'select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%d and user.user_id=%d' % (
-                rec_id, commer[0][0])
-            try:
-                cursor.execute(sql)
-                commList = cursor.fetchall()
-                if cursor.rowcount > 0:
-                    for row in range(cursor.rowcount):
-                        commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
-                                             commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
-                        if r.sismember("comm_rec"+str(commentRec.comm_rec_id), oper):
-                            commentRec.isApprove = True
-                        else:
-                            commentRec.isApprove = False
-                        commL.append(commentRec)
-                cursor.close()
-                return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
-            except Exception as de:
-                cursor.close()
-                return decodeStatus(37)
+            for count in range(cursor.rowcount):
+                try:
+                    cursor.execute('select comm_rec_id,rec_id,commer,content,appr_num,comm_date ,image_src,account_name from comm_rec,user where comm_rec.rec_id=%s and user.user_id=%s' ,(
+                    rec_id, commer[count][0]))
+                    commList = cursor.fetchall()
+                    if cursor.rowcount > 0:
+                        for row in range(cursor.rowcount):
+                            commentRec = Comment(commList[row][0], commList[row][1], commList[row][2],
+                                                commList[row][3], commList[row][4], commList[row][5], commList[row][6], commList[row][7])
+                            if r.sismember("comm_rec"+str(commentRec.comm_rec_id), oper):
+                                commentRec.isApprove = True
+                            else:
+                                commentRec.isApprove = False
+                            commL.append(commentRec)
+                    cursor.close()
+                    return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
+                except Exception as de:
+                    cursor.close()
+                    return decodeStatus(37)
         cursor.close()
         return json.dumps({"msg": "successfully", "code": 0, "data": commL}, default=lambda obj: obj.__dict__, ensure_ascii=False)
     else:
