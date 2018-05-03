@@ -2538,6 +2538,39 @@ def getPayRec():
                                             recs[cnt][5], recs[cnt][6], recs[cnt][7], recs[cnt][8], recs[cnt][9], recs[cnt][10])
                             fillRec(record,str(r.get(token)))
                             recL.append(record)
+            if len(recL)<1:
+                sql_rec = 'select rec_id, recorder, title, url, type, addr, appr_num, comm_num, issue_date, discribe,labels_id_str from record'
+                cursor.execute(sql_rec)
+                recs = cursor.fetchall()
+                recL = []
+                score_dic = {}
+                if cursor.rowcount > 0:
+                    for i in range(cursor.rowcount):
+                        rec_id = int(recs[i][0])
+                        appr_num = recs[i][6]
+                        comm_num = recs[i][7]
+                        coll_num = r.scard("coll_rec"+str(rec_id))
+                        score_dic[rec_id] = w_appr*appr_num + \
+                            w_comm*comm_num+w_coll*coll_num
+                    sorted(score_dic.items(), key=lambda v: v[1], reverse=False)
+                    keys = list(score_dic.keys())
+                    count = 0
+                    for item in keys:
+                        for cnt in range(cursor.rowcount):
+                            if count > 3:
+                                break
+                            if not r.sismember("recommend_rec"+str(r.get(token)), str(recs[cnt][0])):
+                                if int(recs[cnt][0]) == int(item):
+                                    count = count+1
+                                    record = Record(recs[cnt][0], recs[cnt][1], recs[cnt][2], recs[cnt][3], recs[cnt][4],
+                                                    recs[cnt][5], recs[cnt][6], recs[cnt][7], recs[cnt][8], recs[cnt][9], recs[cnt][10])
+                                    fillRec(record,str(r.get(token)))
+                                    recL.append(record)
+                    if count == 0:
+                        record = Record(recs[cursor.rowcount-1][0], recs[cursor.rowcount-1][1], recs[cursor.rowcount-1][2], recs[cursor.rowcount-1][3], recs[cursor.rowcount-1][4],
+                                        recs[cursor.rowcount-1][5], recs[cursor.rowcount-1][6], recs[cursor.rowcount-1][7], recs[cursor.rowcount-1][8], recs[cursor.rowcount-1][9], recs[cursor.rowcount-1][10])
+                        fillRec(record,str(r.get(token)))
+                        recL.append(record)    
             cursor.close()
             cursor_rec.close()
             return json.dumps({"code": 0, "msg": "successfully", "data": list(set(recL))}, default=lambda obj: obj.__dict__, ensure_ascii=False)
