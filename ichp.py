@@ -508,9 +508,8 @@ def getCollEntry():
     req = request.get_json(force=True)
     token = req['token']
     if r.exists(token):
-        sql = 'select entry_id from coll_entry '
         try:
-            cursor.execute(sql)
+            cursor.execute('select entry_id from coll_entry where collector=%s',(int(r.get(token)),))
             entry_ids = cursor.fetchall()
             entryL = []
             rowCount = cursor.rowcount
