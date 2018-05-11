@@ -1,2 +1,2 @@
 #!/bin/bash
-supervisorctl start ichp
+supervisorctl restart ichp
