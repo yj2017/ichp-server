@@ -1670,6 +1670,7 @@ def GetCommRec():
 
     else:
         cursor.close()
+        cursor_rec.close()
         return decodeStatus(8)
 
 # delete the comment of record
